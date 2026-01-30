@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { AccountProfile } from '../../types/game';
 import Card from '../ui/Card';
 import SectionHeader from '../ui/SectionHeader';
@@ -20,6 +21,26 @@ export default function AccountPanel({
   onChange,
   googleProfile,
 }: AccountPanelProps) {
+  const [status, setStatus] = useState<string | null>(null);
+
+  const handleCreate = async () => {
+    setStatus('Đang lưu tài khoản...');
+    const response = await fetch('/api/account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        displayName: account.displayName,
+        tagline: account.tagline,
+      }),
+    });
+
+    if (response.ok) {
+      setStatus('✅ Đã lưu tài khoản vào hệ thống.');
+    } else {
+      setStatus('❌ Không lưu được tài khoản. Hãy kiểm tra đăng nhập.');
+    }
+  };
+
   return (
     <Card>
       <SectionHeader
@@ -30,7 +51,9 @@ export default function AccountPanel({
         {googleProfile && (
           <div className="account-row">
             <div className="inline">
-              <img src={googleProfile.avatar} alt="Google avatar" className="avatar" />
+              {googleProfile.avatar && (
+                <img src={googleProfile.avatar} alt="Google avatar" className="avatar" />
+              )}
               <div>
                 <strong>{googleProfile.name}</strong>
                 <p className="muted">{googleProfile.email}</p>
@@ -58,9 +81,10 @@ export default function AccountPanel({
           />
         </Field>
         <div className="inline">
-          <Button>Khởi tạo tài khoản</Button>
+          <Button onClick={handleCreate}>Khởi tạo tài khoản</Button>
           <Tag tone="violet">Cloud Sync (sắp có)</Tag>
         </div>
+        {status && <p className="hint-text">{status}</p>}
       </div>
     </Card>
   );

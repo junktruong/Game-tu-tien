@@ -1,27 +1,10 @@
 'use client';
 
+import { signIn } from 'next-auth/react';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 
-export type GoogleProfile = {
-  name: string;
-  email: string;
-  avatar: string;
-};
-
-type GoogleLoginGateProps = {
-  onLogin: (profile: GoogleProfile) => void;
-};
-
-export default function GoogleLoginGate({ onLogin }: GoogleLoginGateProps) {
-  const handleLogin = () => {
-    onLogin({
-      name: 'Tu Tiên Sư',
-      email: 'tutien@example.com',
-      avatar: 'https://i.pravatar.cc/120?img=68',
-    });
-  };
-
+export default function GoogleLoginGate() {
   return (
     <main>
       <header className="header">
@@ -38,9 +21,9 @@ export default function GoogleLoginGate({ onLogin }: GoogleLoginGateProps) {
             <p className="muted">
               Tài khoản sẽ đồng bộ tên hiển thị và tiến trình phòng đấu.
             </p>
-            <Button onClick={handleLogin}>Đăng nhập Google</Button>
+            <Button onClick={() => signIn('google')}>Đăng nhập Google</Button>
             <p className="hint-text">
-              Lưu ý: Đây là màn hình mẫu, cần nối OAuth thật trong môi trường production.
+              Hãy cấu hình GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, NEXTAUTH_URL trong môi trường.
             </p>
           </div>
         </Card>

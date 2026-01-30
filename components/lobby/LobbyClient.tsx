@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import type { GameData, RoomProfile } from '../../types/game';
 import AccountPanel from './AccountPanel';
 import CharacterPanel from './CharacterPanel';
 import SkinPanel from './SkinPanel';
 import ArenaPanel from './ArenaPanel';
 import RoomPanel from './RoomPanel';
-import GoogleLoginGate, { type GoogleProfile } from './GoogleLoginGate';
+import GoogleLoginGate from './GoogleLoginGate';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
 
 export default function LobbyClient({ data }: { data: GameData }) {
-  const [googleProfile, setGoogleProfile] = useState<GoogleProfile | null>(null);
+  const { data: session, status } = useSession();
   const [account, setAccount] = useState(data.account);
   const [activeCharacterId, setActiveCharacterId] = useState(
     data.characters[0]?.id,
@@ -22,17 +23,10 @@ export default function LobbyClient({ data }: { data: GameData }) {
   const [rooms, setRooms] = useState(data.rooms);
 
   useEffect(() => {
-    const raw = window.localStorage.getItem('ttf-google-profile');
-    if (raw) {
-      try {
-        const stored = JSON.parse(raw) as GoogleProfile;
-        setGoogleProfile(stored);
-        setAccount((prev) => ({ ...prev, displayName: stored.name }));
-      } catch {
-        window.localStorage.removeItem('ttf-google-profile');
-      }
+    if (session?.user?.name) {
+      setAccount((prev) => ({ ...prev, displayName: session.user.name ?? prev.displayName }));
     }
-  }, []);
+  }, [session]);
 
   const handleCreateRoom = async (room: RoomProfile) => {
     setRooms((prev) => [room, ...prev]);
@@ -43,14 +37,18 @@ export default function LobbyClient({ data }: { data: GameData }) {
     });
   };
 
-  const handleGoogleLogin = (profile: GoogleProfile) => {
-    setGoogleProfile(profile);
-    setAccount((prev) => ({ ...prev, displayName: profile.name }));
-    window.localStorage.setItem('ttf-google-profile', JSON.stringify(profile));
-  };
+  if (status === 'loading') {
+    return (
+      <main>
+        <div className="wrap">
+          <div className="card">Đang kiểm tra phiên đăng nhập...</div>
+        </div>
+      </main>
+    );
+  }
 
-  if (!googleProfile) {
-    return <GoogleLoginGate onLogin={handleGoogleLogin} />;
+  if (!session?.user) {
+    return <GoogleLoginGate />;
   }
 
   return (
@@ -70,7 +68,11 @@ export default function LobbyClient({ data }: { data: GameData }) {
         <AccountPanel
           account={account}
           onChange={setAccount}
-          googleProfile={googleProfile}
+          googleProfile={{
+            name: session.user.name ?? account.displayName,
+            email: session.user.email ?? '',
+            avatar: session.user.image ?? '',
+          }}
         />
         <CharacterPanel
           characters={data.characters}
