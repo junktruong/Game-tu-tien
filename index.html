@@ -1,0 +1,1954 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tu Tiên Giới: Phi Kiếm 2 Tay (ULTRA FX v2)</title>
+  <style>
+    :root{ --ui-cyan:#00ffff; --panel-bg: rgba(0,0,0,.78); }
+    body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
+    #canvas-container { position: absolute; inset: 0; z-index: 1; }
+    .input_video{ position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -10px; top: -10px; }
+
+    #ui-layer{ position:absolute; inset:0; z-index:10; pointer-events:none; display:flex; flex-direction:column; justify-content:space-between; }
+
+    #loading{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color: var(--ui-cyan); font-size: 18px; text-shadow: 0 0 12px var(--ui-cyan);
+      background: rgba(0,0,0,0.85); padding: 18px 20px; border: 1px solid rgba(0,255,255,.55);
+      border-radius: 12px; text-align:center; backdrop-filter: blur(6px);
+      z-index: 9998; max-width: 560px; line-height: 1.35;
+    }
+    #startBtn{
+      position:absolute; top: calc(50% + 76px); left:50%; transform:translateX(-50%);
+      z-index:9999; padding: 10px 14px; border-radius: 12px;
+      background: rgba(0,0,0,.82); color: var(--ui-cyan);
+      border: 1px solid rgba(0,255,255,.6); cursor:pointer; user-select:none; pointer-events:auto;
+      font-weight: 700; letter-spacing: .5px; box-shadow: 0 0 18px rgba(0,255,255,.12);
+    }
+    #startBtn:active{ transform: translateX(-50%) scale(.98); }
+
+    #skill-name{
+      text-align:center; margin-top: 42px;
+      font-size: 40px; font-weight: 800; color:#fff;
+      letter-spacing: 6px; text-transform: uppercase;
+      opacity:0; transform: translateY(-10px) scale(.98);
+      transition: opacity .25s ease, transform .25s ease, filter .25s ease;
+      filter: drop-shadow(0 0 16px rgba(255,0,222,.55));
+      user-select: none;
+    }
+    #skill-name.show{
+      opacity:1; transform: translateY(0) scale(1);
+      filter: drop-shadow(0 0 26px rgba(255,0,222,.75));
+    }
+
+    #guide-panel{
+      background: linear-gradient(90deg, rgba(0,0,0,.86), rgba(0,0,0,.18));
+      padding: 16px 18px; color:#fff; width: 410px;
+      border-left: 4px solid rgba(0,255,255,.8); margin: 0 0 18px 0;
+      backdrop-filter: blur(6px);
+    }
+    #guide-title{
+      font-size: 18px; margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.16);
+      padding-bottom: 6px; letter-spacing: 2px; color: rgba(255,255,255,.95);
+    }
+    .move{ margin-bottom: 8px; font-size: 14px; display:flex; align-items:flex-start; gap:10px; }
+    .icon{ font-size: 20px; width: 26px; line-height: 1.1; }
+    .name{ font-weight: 700; color: var(--ui-cyan); margin-right: 6px; }
+    .desc{ font-size: 12px; color: rgba(255,255,255,.6); font-style: italic; }
+
+    #controls{
+      position:absolute; top: 16px; right: 16px; pointer-events:auto;
+      background: var(--panel-bg);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(6px);
+      display:flex; flex-direction:column; gap:8px;
+      min-width: 300px;
+      z-index: 20;
+    }
+    label{ font-size: 12px; color: rgba(255,255,255,.75); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    select, input[type="range"]{ width: 100%; }
+    select{
+      background: rgba(255,255,255,.06);
+      color:#fff; border: 1px solid rgba(255,255,255,.12);
+      padding: 6px 8px; border-radius: 10px; outline: none;
+    }
+    input[type="checkbox"]{ transform: scale(1.05); }
+  </style>
+</head>
+
+<body>
+  <div id="loading">Đang khai mở linh trí...<br/>Nhấn “Bắt đầu Camera” để kích hoạt.</div>
+  <div id="startBtn">Bắt đầu Camera</div>
+
+  <div id="ui-layer">
+    <div id="skill-name">VẠN KIẾM QUY TÔNG</div>
+
+    <div id="guide-panel">
+      <div id="guide-title">BÍ KÍP • NHIỀU FX • 2 TAY COMBO</div>
+
+      <div class="move"><span class="icon">✋</span><div><span class="name">Liên Hoa:</span><span class="desc">Xòe tay</span></div></div>
+      <div class="move"><span class="icon">✊</span><div><span class="name">Kiếm Cầu:</span><span class="desc">Nắm chặt</span></div></div>
+      <div class="move"><span class="icon">✌️</span><div><span class="name">Attack:</span><span class="desc">2 ngón</span></div></div>
+      <div class="move"><span class="icon">🤘</span><div><span class="name">Wall:</span><span class="desc">Trỏ + Út</span></div></div>
+      <div class="move"><span class="icon">👌</span><div><span class="name">Spin:</span><span class="desc">Pinch</span></div></div>
+      <div class="move"><span class="icon">👍</span><div><span class="name">Giant:</span><span class="desc">Thumb</span></div></div>
+      <div class="move"><span class="icon">☝️</span><div><span class="name">Point:</span><span class="desc">Trỏ (định hướng)</span></div></div>
+      <div class="move"><span class="icon">🤙</span><div><span class="name">Shaka:</span><span class="desc">Triệu hồi/thu kiếm</span></div></div>
+      <div class="move"><span class="icon">🖐️</span><div><span class="name">Fan:</span><span class="desc">4 ngón</span></div></div>
+
+      <div style="height:10px"></div>
+
+      <div class="move"><span class="icon">✌️✌️</span><div><span class="name">Song Kiếm Liệt Không:</span><span class="desc">2 tay Attack (X-Slash cực mạnh)</span></div></div>
+      <div class="move"><span class="icon">🤙🤙</span><div><span class="name">Cổng Kiếm Vũ:</span><span class="desc">2 tay Shaka (Portal + Sword Rain)</span></div></div>
+      <div class="move"><span class="icon">🤘🤘</span><div><span class="name">Hộ Giới Thiên Mạc:</span><span class="desc">2 tay Wall (Dome shield)</span></div></div>
+      <div class="move"><span class="icon">✊👌</span><div><span class="name">Khóa Linh Lôi Liên:</span><span class="desc">Fist + Pinch (BIND + sét)</span></div></div>
+      <div class="move"><span class="icon">👐</span><div><span class="name">Thiên Bạo Kiếm Ấn:</span><span class="desc">Clap (2 tay chụm nhanh) → Nova</span></div></div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <label>
+      Kiếm khí
+      <select id="swordColor">
+        <option value="cyan">Băng Lam</option>
+        <option value="gold">Hoàng Kim</option>
+        <option value="crimson">Huyết Sát</option>
+        <option value="purple">Tử Lôi</option>
+      </select>
+    </label>
+
+    <label>
+      Bloom
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="bloomToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Cường độ Bloom
+      <input id="bloomStrength" type="range" min="0" max="3.2" step="0.05" value="1.25" />
+    </label>
+
+    <label>
+      Trails (Afterimage)
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="trailToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Độ dài Afterimage
+      <input id="trailDamp" type="range" min="0.85" max="0.99" step="0.005" value="0.93" />
+    </label>
+
+    <label>
+      Phi kiếm streak
+      <input id="streakLen" type="range" min="0.6" max="3.0" step="0.05" value="1.55" />
+    </label>
+
+    <label>
+      Phù văn (Magic circle)
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="sigilToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Kiếm hỏa (Particles)
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="particleToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Độ mượt (lọc rung)
+      <input id="smoothness" type="range" min="6" max="18" step="1" value="12" />
+    </label>
+  </div>
+
+  <div id="canvas-container"></div>
+  <video class="input_video" playsinline muted></video>
+
+  <!-- THREE core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Postprocessing deps (r128) -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <!-- FX extra -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/AfterimageShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/AfterimagePass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/RGBShiftShader.js"></script>
+
+  <!-- MediaPipe Hands -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script>
+    // =========================
+    // 0) Secure context check
+    // =========================
+    const loadingEl = document.getElementById('loading');
+    const startBtn = document.getElementById('startBtn');
+
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const isSecure = window.isSecureContext || isLocalhost;
+
+    if (!isSecure){
+      loadingEl.style.display = 'block';
+      loadingEl.innerHTML =
+        'Không thể mở camera vì trang chưa an toàn.<br/>' +
+        'Hãy chạy bằng <b>https</b> hoặc <b>http://localhost</b>.';
+      startBtn.style.display = 'none';
+    }
+
+    // =========================
+    // 1) CONFIG
+    // =========================
+    const SWORD_COUNT = 140;
+    const WORLD_SCALE_X = 60;
+    const WORLD_SCALE_Y = 40;
+
+    const COMBO_WINDOW_MS = 420;
+    const CLAP_COOLDOWN_MS = 900;
+
+    const GESTURE = {
+      IDLE:'IDLE', LOTUS:'LOTUS', SPHERE:'SPHERE', ATTACK:'ATTACK', WALL:'WALL',
+      SPIN:'SPIN', GIANT:'GIANT', POINT:'POINT', SHAKA:'SHAKA', FAN:'FAN'
+    };
+
+    const FORM = {
+      DUAL_LOTUS:'DUAL_LOTUS',
+      DUAL_SPHERE:'DUAL_SPHERE',
+      DUAL_SPIN:'DUAL_SPIN',
+      DUAL_POINT:'DUAL_POINT',
+      DUAL_FAN:'DUAL_FAN',
+      DUAL_WALL_DOME:'DUAL_WALL_DOME',
+      DUAL_MIX:'DUAL_MIX',
+      BIND:'BIND'
+    };
+
+    const ACTION = {
+      NONE:'NONE',
+      ATTACK_SINGLE:'ATTACK_SINGLE',
+      ATTACK_DUALX:'ATTACK_DUALX',
+      NOVA:'NOVA',
+      RAIN:'RAIN'
+    };
+
+    const THEMES = {
+      cyan:    { color: 0x00ffff, glow: 0x0044ff, fog: 0x050505 },
+      gold:    { color: 0xffd700, glow: 0xff5a1f, fog: 0x070604 },
+      crimson: { color: 0xff0033, glow: 0x550000, fog: 0x070404 },
+      purple:  { color: 0xbc13fe, glow: 0x4b0082, fog: 0x05040a }
+    };
+    let currentTheme = THEMES.cyan;
+
+    const STABLE_FRAMES = 4;
+    const GESTURE_COOLDOWN_MS = 220;
+
+    const actionState = {
+      active:false,
+      type: ACTION.NONE,
+      start: 0,
+      phase: 0
+    };
+
+    let shake = 0;
+    const tmpObj = new THREE.Object3D();
+
+    // =========================
+    // 2) UI
+    // =========================
+    const skillNameEl = document.getElementById('skill-name');
+    function hex6(n){ return n.toString(16).padStart(6,'0'); }
+    function showSkillName(name){
+      skillNameEl.textContent = name;
+      skillNameEl.style.textShadow = `0 0 26px #${hex6(currentTheme.color)}, 2px 2px 0px #000`;
+      skillNameEl.classList.add('show');
+      clearTimeout(window.__skillT);
+      window.__skillT = setTimeout(()=> skillNameEl.classList.remove('show'), 1600);
+    }
+
+    // =========================
+    // 3) THREE: Scene
+    // =========================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(currentTheme.fog, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+    camera.position.z = 42;
+
+    const renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.domElement.style.transform = "scaleX(-1)";
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(ambient);
+
+    const handLight = new THREE.PointLight(currentTheme.color, 1.55, 170, 2);
+    handLight.position.set(0,0,10);
+    scene.add(handLight);
+
+    // =========================
+    // 3.1) Postprocessing
+    // =========================
+    const bloomToggle = document.getElementById('bloomToggle');
+    const bloomStrength = document.getElementById('bloomStrength');
+    const trailToggle = document.getElementById('trailToggle');
+    const trailDamp = document.getElementById('trailDamp');
+    const particleToggle = document.getElementById('particleToggle');
+    const streakLen = document.getElementById('streakLen');
+    const sigilToggle = document.getElementById('sigilToggle');
+
+    let composer = null;
+    let bloomPass = null;
+    let afterimagePass = null;
+    let rgbShiftPass = null;
+    let useComposer = false;
+
+    function setupComposerSafe(){
+      try{
+        composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        afterimagePass = new THREE.AfterimagePass();
+        afterimagePass.uniforms.damp.value = parseFloat(trailDamp.value);
+        afterimagePass.enabled = !!trailToggle.checked;
+        composer.addPass(afterimagePass);
+
+        bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.0, 0.9, 0.25);
+        composer.addPass(bloomPass);
+
+        rgbShiftPass = new THREE.ShaderPass(THREE.RGBShiftShader);
+        rgbShiftPass.uniforms.amount.value = 0.0;
+        composer.addPass(rgbShiftPass);
+
+        useComposer = true;
+      }catch(e){
+        console.error("Composer init failed:", e);
+        useComposer = false;
+        composer = null; bloomPass = null; afterimagePass = null; rgbShiftPass = null;
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = 'FX bị lỗi (CDN bị chặn). App sẽ chạy không FX.';
+        setTimeout(()=>{ if(loadingEl.style.display !== 'none') loadingEl.style.display = 'none'; }, 2200);
+      }
+    }
+    setupComposerSafe();
+
+    function syncBloomUI(){
+      if(!useComposer || !bloomPass){
+        bloomToggle.checked = false;
+        bloomToggle.disabled = true;
+        bloomStrength.disabled = true;
+        return;
+      }
+      bloomStrength.addEventListener('input', ()=> bloomPass.strength = parseFloat(bloomStrength.value));
+      bloomToggle.addEventListener('change', ()=> bloomPass.strength = bloomToggle.checked ? parseFloat(bloomStrength.value) : 0);
+      bloomPass.strength = bloomToggle.checked ? parseFloat(bloomStrength.value) : 0;
+    }
+    syncBloomUI();
+
+    trailToggle.addEventListener('change', ()=>{ if(afterimagePass) afterimagePass.enabled = !!trailToggle.checked; });
+    trailDamp.addEventListener('input', ()=>{ if(afterimagePass) afterimagePass.uniforms.damp.value = parseFloat(trailDamp.value); });
+
+    // =========================
+    // 3.2) Stars
+    // =========================
+    function createStars(){
+      const starCount = 1000;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(starCount * 3);
+      for(let i=0;i<starCount;i++){
+        pos[i*3+0] = (Math.random()-0.5)*240;
+        pos[i*3+1] = (Math.random()-0.5)*140;
+        pos[i*3+2] = -10 - Math.random()*320;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.6, transparent: true, opacity: 0.75, depthWrite: false });
+      const pts = new THREE.Points(geo, mat);
+      pts.userData.rot = (Math.random()*0.5 + 0.15) * (Math.random()<0.5?-1:1);
+      scene.add(pts);
+      return pts;
+    }
+    const stars = createStars();
+
+    // =========================
+    // 4) Textures
+    // =========================
+    function makeGlowTexture(){
+      const c = document.createElement('canvas');
+      c.width = c.height = 64;
+      const g = c.getContext('2d');
+      const grad = g.createRadialGradient(32,32,0, 32,32,32);
+      grad.addColorStop(0.0,'rgba(255,255,255,1)');
+      grad.addColorStop(0.2,'rgba(255,255,255,.65)');
+      grad.addColorStop(0.55,'rgba(255,255,255,.20)');
+      grad.addColorStop(1.0,'rgba(255,255,255,0)');
+      g.fillStyle = grad;
+      g.fillRect(0,0,64,64);
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      return tex;
+    }
+    const glowTex = makeGlowTexture();
+
+    function makeSigilTexture(){
+      const c = document.createElement('canvas');
+      c.width = c.height = 512;
+      const g = c.getContext('2d');
+      g.clearRect(0,0,512,512);
+      g.translate(256,256);
+
+      const rg = g.createRadialGradient(0,0,30, 0,0,250);
+      rg.addColorStop(0,'rgba(255,255,255,0.95)');
+      rg.addColorStop(0.18,'rgba(255,255,255,0.55)');
+      rg.addColorStop(0.55,'rgba(255,255,255,0.14)');
+      rg.addColorStop(1,'rgba(255,255,255,0.0)');
+      g.fillStyle = rg;
+      g.beginPath(); g.arc(0,0,250,0,Math.PI*2); g.fill();
+
+      g.strokeStyle = 'rgba(255,255,255,0.6)';
+      g.lineWidth = 3;
+      [70, 115, 170, 220].forEach(r=>{
+        g.beginPath(); g.arc(0,0,r,0,Math.PI*2); g.stroke();
+      });
+
+      g.strokeStyle = 'rgba(255,255,255,0.55)';
+      g.lineWidth = 2;
+      for(let i=0;i<48;i++){
+        const a = (i/48)*Math.PI*2;
+        const r1 = 125 + (i%2)*8;
+        const r2 = 155 + (i%3)*8;
+        g.beginPath();
+        g.moveTo(Math.cos(a)*r1, Math.sin(a)*r1);
+        g.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
+        g.stroke();
+      }
+
+      g.strokeStyle = 'rgba(255,255,255,0.5)';
+      g.lineWidth = 2;
+      g.beginPath();
+      const pts = 12;
+      for(let i=0;i<=pts;i++){
+        const a = (i/pts)*Math.PI*2;
+        const r = (i%2===0)? 90 : 45;
+        g.lineTo(Math.cos(a)*r, Math.sin(a)*r);
+      }
+      g.closePath(); g.stroke();
+
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearMipMapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      return tex;
+    }
+    const sigilTex = makeSigilTexture();
+
+    // =========================
+    // 5) Swords
+    // =========================
+    const swords = [];
+    function createSwordMesh(){
+      const group = new THREE.Group();
+
+      const bladeGeo = new THREE.BoxGeometry(0.35, 6.4, 0.15);
+      const bladeMat = new THREE.MeshStandardMaterial({
+        color: currentTheme.color,
+        emissive: currentTheme.glow,
+        emissiveIntensity: 0.75,
+        metalness: 0.35,
+        roughness: 0.22,
+        transparent: true,
+        opacity: 0.92
+      });
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.position.y = 3.2;
+
+      const tipGeo = new THREE.ConeGeometry(0.22, 0.7, 6);
+      const tipMat = bladeMat.clone();
+      tipMat.emissiveIntensity = 1.10;
+      const tip = new THREE.Mesh(tipGeo, tipMat);
+      tip.position.y = 6.75;
+      tip.rotation.x = Math.PI;
+
+      const guardGeo = new THREE.BoxGeometry(1.35, 0.18, 0.22);
+      const guardMat = new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.75, roughness: 0.35 });
+      const guard = new THREE.Mesh(guardGeo, guardMat);
+      guard.position.y = 0.62;
+
+      const handleGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.9, 10);
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, metalness: 0.2, roughness: 0.7 });
+      const handle = new THREE.Mesh(handleGeo, handleMat);
+      handle.position.y = 0.15;
+
+      const glowMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: currentTheme.color,
+        transparent: true,
+        opacity: 0.66,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const glow = new THREE.Sprite(glowMat);
+      glow.position.y = 3.2;
+      glow.scale.set(4.1, 8.2, 1);
+
+      group.add(glow, blade, tip, guard, handle);
+
+      group.userData = {
+        offset: Math.random() * Math.PI * 2,
+        bladeMat, tipMat, glowMat,
+        prevPos: new THREE.Vector3(),
+        vel: new THREE.Vector3()
+      };
+      return group;
+    }
+
+    function spawnSwords(){
+      for(const s of swords) scene.remove(s);
+      swords.length = 0;
+
+      for(let i=0;i<SWORD_COUNT;i++){
+        const s = createSwordMesh();
+        s.position.set((Math.random()-0.5)*90, (Math.random()-0.5)*56, -18 - Math.random()*18);
+        s.rotation.set(Math.random(), Math.random(), Math.random());
+        scene.add(s);
+        s.userData.prevPos.copy(s.position);
+        swords.push(s);
+      }
+    }
+    spawnSwords();
+
+    // =========================
+    // 5.1) Multi-layer streak trails (5 layers)
+    // =========================
+    const trailGeo = new THREE.PlaneGeometry(1,1);
+    const trailMats = [
+      new THREE.MeshBasicMaterial({ map: glowTex, transparent:true, opacity:0.46, depthWrite:false, blending:THREE.AdditiveBlending, color: currentTheme.color }),
+      new THREE.MeshBasicMaterial({ map: glowTex, transparent:true, opacity:0.26, depthWrite:false, blending:THREE.AdditiveBlending, color: currentTheme.color }),
+      new THREE.MeshBasicMaterial({ map: glowTex, transparent:true, opacity:0.16, depthWrite:false, blending:THREE.AdditiveBlending, color: currentTheme.color }),
+      new THREE.MeshBasicMaterial({ map: glowTex, transparent:true, opacity:0.10, depthWrite:false, blending:THREE.AdditiveBlending, color: currentTheme.color }),
+      new THREE.MeshBasicMaterial({ map: glowTex, transparent:true, opacity:0.06, depthWrite:false, blending:THREE.AdditiveBlending, color: currentTheme.color }),
+    ];
+    const streaks = trailMats.map(mat=>{
+      const m = new THREE.InstancedMesh(trailGeo, mat, SWORD_COUNT);
+      m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      scene.add(m);
+      return m;
+    });
+
+    const qCam = new THREE.Quaternion();
+    const qRotZ = new THREE.Quaternion();
+    const qFinal = new THREE.Quaternion();
+    const mInst = new THREE.Matrix4();
+    const sVec = new THREE.Vector3();
+    const vVel = new THREE.Vector3();
+    const vDir = new THREE.Vector3();
+    const vPos = new THREE.Vector3();
+
+    function updateSwordStreaks(dt){
+      const mul = parseFloat(streakLen.value);
+      qCam.copy(camera.quaternion);
+
+      for(let i=0;i<SWORD_COUNT;i++){
+        const sw = swords[i];
+        const prev = sw.userData.prevPos;
+
+        vVel.copy(sw.position).sub(prev);
+        prev.copy(sw.position);
+
+        const spd = (dt > 0.00001) ? (vVel.length() / dt) : 0;
+        sw.userData.vel.copy(vVel);
+
+        if(spd < 6){
+          for(let k=0;k<streaks.length;k++){
+            sVec.set(0,0,0);
+            mInst.compose(new THREE.Vector3(0,0,-9999), qCam, sVec);
+            streaks[k].setMatrixAt(i, mInst);
+          }
+          continue;
+        }
+
+        vDir.copy(vVel).normalize();
+        const ang = Math.atan2(vDir.y, vDir.x);
+        qRotZ.setFromAxisAngle(new THREE.Vector3(0,0,1), ang);
+        qFinal.copy(qCam).multiply(qRotZ);
+
+        const baseW = 0.80 + spd * 0.010;
+        const baseL = (2.4 + spd * 0.050) * mul;
+
+        for(let k=0;k<streaks.length;k++){
+          const back = (k+1) * (1.25 + spd*0.006) * mul;
+          vPos.copy(sw.position).addScaledVector(vDir, -back);
+          vPos.z -= 0.2 + k*0.07;
+
+          const fall = 1 - k*0.18;
+          sVec.set(baseL * fall, baseW * fall, 1);
+
+          mInst.compose(vPos, qFinal, sVec);
+          streaks[k].setMatrixAt(i, mInst);
+        }
+
+        // sword-speed sparks (đẹp cực)
+        if(particleToggle.checked && spd > 55 && Math.random() < 0.45){
+          emitSparks(sw.position, vDir, 1, 22, 0.22, 0.14, 0.26);
+        }
+      }
+
+      streaks.forEach(t => t.instanceMatrix.needsUpdate = true);
+    }
+
+    // =========================
+    // 6) FX: Sparks, Rings, Slash, Lightning, Dome, Portal
+    // =========================
+    const SPARK_MAX = 1300;
+    const sparkGeo = new THREE.PlaneGeometry(0.55, 0.55);
+    const sparkMat = new THREE.MeshBasicMaterial({
+      map: glowTex, transparent:true, opacity:0.9, depthWrite:false,
+      blending:THREE.AdditiveBlending, color: currentTheme.color
+    });
+    const sparks = new THREE.InstancedMesh(sparkGeo, sparkMat, SPARK_MAX);
+    sparks.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(sparks);
+
+    const sparkState = Array.from({length: SPARK_MAX}, ()=>({
+      pos: new THREE.Vector3(0,0,-9999),
+      vel: new THREE.Vector3(),
+      life: 0,
+      max: 1
+    }));
+    let sparkCursor = 0;
+    const _m = new THREE.Matrix4();
+    const _s = new THREE.Vector3();
+    const _q = new THREE.Quaternion();
+
+    function emitSparks(origin, dir, count, speed, spread, lifeMin=0.25, lifeMax=0.55){
+      if(!particleToggle.checked) return;
+      for(let k=0;k<count;k++){
+        const p = sparkState[sparkCursor];
+        sparkCursor = (sparkCursor + 1) % SPARK_MAX;
+
+        p.pos.copy(origin);
+        p.pos.z += (Math.random()-0.5)*0.8;
+
+        const d = new THREE.Vector3(
+          dir.x + (Math.random()-0.5)*spread,
+          dir.y + (Math.random()-0.5)*spread,
+          dir.z + (Math.random()-0.5)*spread
+        ).normalize();
+
+        const sp = speed * (0.7 + Math.random()*0.6);
+        p.vel.copy(d).multiplyScalar(sp);
+
+        p.max = lifeMin + Math.random()*(lifeMax-lifeMin);
+        p.life = p.max;
+      }
+    }
+
+    function updateSparks(dt){
+      _q.copy(camera.quaternion);
+      for(let i=0;i<SPARK_MAX;i++){
+        const p = sparkState[i];
+        if(p.life > 0){
+          p.life -= dt;
+          p.pos.addScaledVector(p.vel, dt);
+          p.vel.multiplyScalar(0.985);
+
+          const t = Math.max(0, p.life / p.max);
+          const sc = 0.22 + 0.95 * Math.pow(t, 0.7);
+          _s.set(sc, sc, sc);
+          _m.compose(p.pos, _q, _s);
+          sparks.setMatrixAt(i, _m);
+        }else{
+          _s.set(0,0,0);
+          _m.compose(new THREE.Vector3(0,0,-9999), _q, _s);
+          sparks.setMatrixAt(i, _m);
+        }
+      }
+      sparks.instanceMatrix.needsUpdate = true;
+    }
+
+    // Rings (shockwave)
+    const ringPool = [];
+    const RING_MAX = 16;
+    function makeRing(){
+      const geo = new THREE.RingGeometry(0.8, 1.15, 64);
+      const mat = new THREE.MeshBasicMaterial({
+        color: currentTheme.color, transparent:true, opacity:0.0, depthWrite:false,
+        blending:THREE.AdditiveBlending, side:THREE.DoubleSide
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.visible = false;
+      scene.add(mesh);
+      return { mesh, life: 0, max: 1, grow: 1 };
+    }
+    for(let i=0;i<RING_MAX;i++) ringPool.push(makeRing());
+    let ringCursor = 0;
+
+    function spawnRing(pos, big=false){
+      const r = ringPool[ringCursor];
+      ringCursor = (ringCursor + 1) % RING_MAX;
+
+      r.mesh.visible = true;
+      r.mesh.position.copy(pos);
+      r.mesh.position.z = -1.5;
+      r.mesh.rotation.z = Math.random() * Math.PI;
+      r.max = big ? 0.95 : 0.55;
+      r.life = r.max;
+      r.grow = big ? 14 : 8;
+      r.mesh.scale.setScalar(big ? 1.35 : 0.95);
+      r.mesh.material.opacity = 0.85;
+    }
+
+    function updateRings(dt){
+      for(const r of ringPool){
+        if(r.life > 0){
+          r.life -= dt;
+          const t = Math.max(0, r.life / r.max);
+          const inv = 1 - t;
+          const sc = (0.9 + inv * r.grow);
+          r.mesh.scale.setScalar(sc);
+          r.mesh.material.opacity = 0.85 * Math.pow(t, 1.6);
+          r.mesh.rotation.z += dt * 2.3;
+          if(r.life <= 0){
+            r.mesh.visible = false;
+            r.mesh.material.opacity = 0.0;
+          }
+        }
+      }
+    }
+
+    // Slash arcs (vệt chém)
+    const SLASH_MAX = 18;
+    const slashPool = [];
+    function makeSlash(){
+      const geo = new THREE.PlaneGeometry(1,1);
+      const mat = new THREE.MeshBasicMaterial({
+        map: glowTex, transparent:true, opacity:0.0, depthWrite:false,
+        blending:THREE.AdditiveBlending, color: currentTheme.color, side:THREE.DoubleSide
+      });
+      const m = new THREE.Mesh(geo, mat);
+      m.visible = false;
+      m.frustumCulled = false;
+      scene.add(m);
+      return { mesh:m, life:0, max:1, rot:1, grow:1 };
+    }
+    for(let i=0;i<SLASH_MAX;i++) slashPool.push(makeSlash());
+    let slashCursor = 0;
+
+    function spawnSlash(pos, dir2D, big=false){
+      const s = slashPool[slashCursor];
+      slashCursor = (slashCursor + 1) % SLASH_MAX;
+
+      s.mesh.visible = true;
+      s.mesh.position.copy(pos);
+      s.mesh.position.z = -1.2;
+      s.max = big ? 0.55 : 0.35;
+      s.life = s.max;
+      s.grow = big ? 16 : 10;
+
+      const ang = Math.atan2(dir2D.y, dir2D.x);
+      s.mesh.quaternion.copy(camera.quaternion);
+      s.mesh.rotateOnAxis(new THREE.Vector3(0,0,1), ang);
+
+      s.mesh.scale.set(big ? 10 : 7, big ? 2.1 : 1.6, 1);
+      s.mesh.material.opacity = big ? 0.85 : 0.6;
+    }
+
+    function updateSlash(dt){
+      for(const s of slashPool){
+        if(s.life > 0){
+          s.life -= dt;
+          const t = Math.max(0, s.life / s.max);
+          const inv = 1 - t;
+          s.mesh.scale.x = s.mesh.scale.x + inv * (dt * s.grow);
+          s.mesh.material.opacity = (0.75 * Math.pow(t, 1.4));
+          s.mesh.rotateOnAxis(new THREE.Vector3(0,0,1), dt * 1.8);
+          if(s.life <= 0){
+            s.mesh.visible = false;
+            s.mesh.material.opacity = 0.0;
+          }
+        }
+      }
+    }
+
+    // Magic circles
+    function makeSigilMesh(scale=7.5){
+      const geo = new THREE.PlaneGeometry(1,1);
+      const mat = new THREE.MeshBasicMaterial({
+        map: sigilTex, transparent:true, opacity:0.65, depthWrite:false,
+        blending:THREE.AdditiveBlending, color: currentTheme.color
+      });
+      const m = new THREE.Mesh(geo, mat);
+      m.scale.setScalar(scale);
+      m.visible = false;
+      m.frustumCulled = false;
+      scene.add(m);
+
+      const mat2 = mat.clone();
+      mat2.opacity = 0.25;
+      const m2 = new THREE.Mesh(geo, mat2);
+      m2.scale.setScalar(scale * 1.35);
+      m2.visible = false;
+      m2.frustumCulled = false;
+      scene.add(m2);
+
+      return { inner: m, outer: m2 };
+    }
+    const sigilL = makeSigilMesh(7.2);
+    const sigilR = makeSigilMesh(7.2);
+    const sigilC = makeSigilMesh(9.0);
+
+    function updateSigil(pack, pos, t, strength=1){
+      const on = sigilToggle.checked;
+      pack.inner.visible = on;
+      pack.outer.visible = on;
+      if(!on) return;
+
+      pack.inner.position.copy(pos); pack.inner.position.z = -1.35;
+      pack.outer.position.copy(pos); pack.outer.position.z = -1.37;
+
+      pack.inner.quaternion.copy(camera.quaternion);
+      pack.outer.quaternion.copy(camera.quaternion);
+
+      const s = strength;
+      pack.inner.scale.setScalar(7.2*s);
+      pack.outer.scale.setScalar(9.7*s);
+
+      pack.inner.material.opacity = 0.35 + 0.25*Math.sin(t*2.6) * 0.5 + 0.25;
+      pack.outer.material.opacity = 0.18 + 0.16*Math.cos(t*2.1) * 0.5 + 0.16;
+
+      pack.inner.rotateOnAxis(new THREE.Vector3(0,0,1), 0.02 * (1 + strength));
+      pack.outer.rotateOnAxis(new THREE.Vector3(0,0,1), -0.012 * (1 + strength));
+    }
+
+    // Lightning arcs (3 lines)
+    const ARC_COUNT = 3;
+    const ARC_PTS = 54;
+    const arcLines = [];
+    for(let j=0;j<ARC_COUNT;j++){
+      const pos = new Float32Array(ARC_PTS*3);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.LineBasicMaterial({ color: currentTheme.color, transparent:true, opacity:0.0 });
+      const line = new THREE.Line(geo, mat);
+      line.visible = false;
+      line.frustumCulled = false;
+      scene.add(line);
+      arcLines.push({line, pos, geo, mat, seed: Math.random()*10});
+    }
+
+    function updateLightning(A, B, t, intensity=1){
+      for(let j=0;j<ARC_COUNT;j++){
+        const o = arcLines[j];
+        o.line.visible = true;
+
+        const ab = new THREE.Vector3().subVectors(B, A);
+        const len = Math.max(0.001, ab.length());
+        const u = ab.clone().multiplyScalar(1/len);
+
+        let perp = new THREE.Vector3(0,0,1).cross(u);
+        if(perp.length() < 0.001) perp.set(1,0,0);
+        perp.normalize();
+        const perp2 = u.clone().cross(perp).normalize();
+
+        const amp = (1.0 + len*0.08) * intensity * (0.7 + j*0.25);
+        for(let i=0;i<ARC_PTS;i++){
+          const s = i/(ARC_PTS-1);
+          const p = A.clone().addScaledVector(u, s*len);
+
+          const n1 = Math.sin(s*Math.PI*10 + t*14 + o.seed + j);
+          const n2 = Math.cos(s*Math.PI*8  + t*11 + o.seed*1.3);
+          const taper = 1 - Math.abs(0.5-s)*1.35;
+
+          p.addScaledVector(perp, n1 * amp * taper);
+          p.addScaledVector(perp2, n2 * amp * 0.55 * taper);
+
+          o.pos[i*3+0] = p.x;
+          o.pos[i*3+1] = p.y;
+          o.pos[i*3+2] = -1.25;
+        }
+        o.geo.attributes.position.needsUpdate = true;
+        o.mat.opacity = 0.18 + 0.22 * intensity;
+      }
+    }
+
+    function hideLightning(){
+      for(const o of arcLines){
+        o.line.visible = false;
+        o.mat.opacity = 0.0;
+      }
+    }
+
+    // Dome shield
+    const domeGeo = new THREE.SphereGeometry(1, 32, 20);
+    const domeMat = new THREE.MeshBasicMaterial({
+      color: currentTheme.color,
+      transparent:true,
+      opacity:0.0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending,
+      side:THREE.DoubleSide
+    });
+    const dome = new THREE.Mesh(domeGeo, domeMat);
+    dome.visible = false;
+    scene.add(dome);
+
+    function updateDome(pos, t, radius=14){
+      dome.visible = true;
+      dome.position.copy(pos);
+      dome.position.z = -10;
+      dome.scale.setScalar(radius);
+      domeMat.opacity = 0.10 + 0.08*Math.sin(t*2.2);
+      dome.quaternion.copy(camera.quaternion);
+      dome.rotateOnAxis(new THREE.Vector3(0,0,1), t*0.15);
+    }
+    function hideDome(){ dome.visible = false; domeMat.opacity = 0.0; }
+
+    // Portal (plane)
+    const portalGeo = new THREE.PlaneGeometry(1,1);
+    const portalMat = new THREE.MeshBasicMaterial({
+      map: sigilTex,
+      color: currentTheme.color,
+      transparent:true,
+      opacity:0.0,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending,
+      side:THREE.DoubleSide
+    });
+    const portal = new THREE.Mesh(portalGeo, portalMat);
+    portal.visible = false;
+    portal.frustumCulled = false;
+    scene.add(portal);
+
+    function updatePortal(pos, t, scale=10){
+      portal.visible = true;
+      portal.position.copy(pos);
+      portal.position.z = -16;
+      portal.quaternion.copy(camera.quaternion);
+      portal.rotateOnAxis(new THREE.Vector3(0,0,1), t*0.8);
+      portal.scale.setScalar(scale);
+      portalMat.opacity = 0.35 + 0.18*Math.sin(t*3.1)*0.5 + 0.18;
+    }
+    function hidePortal(){ portal.visible = false; portalMat.opacity = 0.0; }
+
+    // =========================
+    // 7) Theme apply
+    // =========================
+    function applyTheme(){
+      scene.fog.color.setHex(currentTheme.fog);
+      handLight.color.setHex(currentTheme.color);
+      document.documentElement.style.setProperty('--ui-cyan', `#${hex6(currentTheme.color)}`);
+
+      for(const s of swords){
+        s.userData.bladeMat.color.setHex(currentTheme.color);
+        s.userData.bladeMat.emissive.setHex(currentTheme.glow);
+        s.userData.tipMat.color.setHex(currentTheme.color);
+        s.userData.tipMat.emissive.setHex(currentTheme.glow);
+        s.userData.glowMat.color.setHex(currentTheme.color);
+      }
+
+      sparkMat.color.setHex(currentTheme.color);
+      ringPool.forEach(r => r.mesh.material.color.setHex(currentTheme.color));
+      slashPool.forEach(s => s.mesh.material.color.setHex(currentTheme.color));
+      trailMats.forEach(m => m.color.setHex(currentTheme.color));
+      domeMat.color.setHex(currentTheme.color);
+      portalMat.color.setHex(currentTheme.color);
+
+      [sigilL, sigilR, sigilC].forEach(p=>{
+        p.inner.material.color.setHex(currentTheme.color);
+        p.outer.material.color.setHex(currentTheme.color);
+      });
+
+      for(const o of arcLines) o.mat.color.setHex(currentTheme.color);
+    }
+
+    document.getElementById('swordColor').addEventListener('change', (e)=>{
+      currentTheme = THEMES[e.target.value] || THEMES.cyan;
+      applyTheme();
+    });
+
+    // =========================
+    // 8) Two-hand data + smoothing
+    // =========================
+    function mapLmToWorld(lm){
+      return new THREE.Vector3(
+        (0.5 - lm.x) * WORLD_SCALE_X,
+        (0.5 - lm.y) * WORLD_SCALE_Y,
+        0
+      );
+    }
+
+    const handsState = {
+      L: { detected:false, raw:null, palmTarget:new THREE.Vector3(), palmPos:new THREE.Vector3(), indexTarget:new THREE.Vector3(), indexPos:new THREE.Vector3(), lastCommitted: GESTURE.IDLE, lastChangeAt: 0, queue:[] },
+      R: { detected:false, raw:null, palmTarget:new THREE.Vector3(), palmPos:new THREE.Vector3(), indexTarget:new THREE.Vector3(), indexPos:new THREE.Vector3(), lastCommitted: GESTURE.IDLE, lastChangeAt: 0, queue:[] }
+    };
+
+    const centerTarget = new THREE.Vector3(0,0,0);
+    const centerPos = new THREE.Vector3(0,0,0);
+
+    function anyHandDetected(){ return handsState.L.detected || handsState.R.detected; }
+
+    function updateCenterTargets(){
+      const L = handsState.L, R = handsState.R;
+      if(L.detected && R.detected){
+        centerTarget.copy(L.palmTarget).add(R.palmTarget).multiplyScalar(0.5);
+      }else if(R.detected){
+        centerTarget.copy(R.palmTarget);
+      }else if(L.detected){
+        centerTarget.copy(L.palmTarget);
+      }else{
+        centerTarget.set(0,0,0);
+      }
+    }
+
+    // =========================
+    // 9) Gesture detection
+    // =========================
+    function dist2(a,b){
+      const dx = a.x-b.x, dy = a.y-b.y;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    function detectGesture(lm){
+      const wrist = lm[0];
+      const thumbTip = lm[4];
+      const indexTip = lm[8];
+      const middleTip = lm[12];
+      const ringTip = lm[16];
+      const pinkyTip = lm[20];
+
+      const thumbMCP = lm[2];
+      const indexMCP = lm[5];
+      const middleMCP = lm[9];
+      const ringMCP = lm[13];
+      const pinkyMCP = lm[17];
+
+      const handSize = Math.max(0.12, dist2(wrist, middleMCP));
+      const pinchTh = handSize * 0.17;
+      const fistTh  = handSize * 0.92;
+      const extMul  = 1.26;
+
+      const isExtended = (tip, mcp) => dist2(tip, wrist) > dist2(mcp, wrist) * extMul;
+
+      const thumbOut  = isExtended(thumbTip, thumbMCP);
+      const indexOut  = isExtended(indexTip, indexMCP);
+      const middleOut = isExtended(middleTip, middleMCP);
+      const ringOut   = isExtended(ringTip, ringMCP);
+      const pinkyOut  = isExtended(pinkyTip, pinkyMCP);
+
+      const extCount = [thumbOut,indexOut,middleOut,ringOut,pinkyOut].filter(Boolean).length;
+      const pinch = dist2(thumbTip, indexTip) < pinchTh;
+
+      if (pinch && (middleOut || ringOut || pinkyOut || !indexOut)) return GESTURE.SPIN;
+      if (thumbOut && pinkyOut && !indexOut && !middleOut && !ringOut) return GESTURE.SHAKA;
+      if (indexOut && pinkyOut && !middleOut && !ringOut) return GESTURE.WALL;
+      if (indexOut && middleOut && !ringOut && !pinkyOut) return GESTURE.ATTACK;
+      if (indexOut && !middleOut && !ringOut && !pinkyOut && !thumbOut) return GESTURE.POINT;
+      if (!thumbOut && indexOut && middleOut && ringOut && pinkyOut) return GESTURE.FAN;
+      if (thumbOut && !indexOut && !middleOut && !ringOut && !pinkyOut) return GESTURE.GIANT;
+
+      const avgTipDist = (dist2(indexTip,wrist)+dist2(middleTip,wrist)+dist2(ringTip,wrist)+dist2(pinkyTip,wrist))/4;
+      if (avgTipDist < fistTh && extCount <= 1) return GESTURE.SPHERE;
+
+      return GESTURE.LOTUS;
+    }
+
+    function gestureLabelName(g){
+      switch(g){
+        case GESTURE.ATTACK: return "Phá Thiên Kích";
+        case GESTURE.SPHERE: return "Hộ Thân Kiếm Cầu";
+        case GESTURE.WALL: return "Thiên La Địa Võng";
+        case GESTURE.SPIN: return "Thái Cực Kiếm Trận";
+        case GESTURE.GIANT: return "Cự Kiếm Thuật";
+        case GESTURE.POINT: return "Truy Kiếm Thuật";
+        case GESTURE.SHAKA: return "Hồi Kiếm Thuật";
+        case GESTURE.FAN: return "Tứ Tượng Kiếm Phiến";
+        case GESTURE.LOTUS: return "Liên Hoa Trận";
+        default: return "";
+      }
+    }
+
+    function startAction(type){
+      actionState.active = true;
+      actionState.type = type;
+      actionState.start = performance.now();
+      actionState.phase = 0;
+      shake = 1.2;
+
+      if(type === ACTION.ATTACK_DUALX) showSkillName("SONG KIẾM LIỆT KHÔNG");
+      if(type === ACTION.ATTACK_SINGLE) showSkillName("PHÁ THIÊN KÍCH");
+      if(type === ACTION.NOVA) showSkillName("THIÊN BẠO KIẾM ẤN");
+      if(type === ACTION.RAIN) showSkillName("CỔNG KIẾM VŨ");
+
+      spawnRing(centerPos, true);
+      if(rgbShiftPass) rgbShiftPass.uniforms.amount.value = 0.014;
+    }
+
+    function stopAction(){
+      actionState.active = false;
+      actionState.type = ACTION.NONE;
+      actionState.phase = 0;
+      if(rgbShiftPass) rgbShiftPass.uniforms.amount.value = 0.0;
+      renderer.toneMappingExposure = 1.05;
+    }
+
+    function commitGestureFor(handKey, g){
+      const H = handsState[handKey];
+      const now = Date.now();
+      if (now - H.lastChangeAt < GESTURE_COOLDOWN_MS) return;
+      if (g === H.lastCommitted) return;
+
+      H.lastCommitted = g;
+      H.lastChangeAt = now;
+
+      // show (nhẹ thôi)
+      const prefix = (handKey === 'L') ? "TẢ" : "HỮU";
+      const nm = gestureLabelName(g);
+      if(nm) showSkillName(`${prefix} • ${nm}`);
+
+      // FX ping
+      spawnRing(H.palmPos, g === GESTURE.ATTACK || g === GESTURE.SPHERE);
+
+      // ====== action triggers (2 tay ưu tiên) ======
+      const other = handsState[handKey === 'L' ? 'R' : 'L'];
+
+      // Dual Attack X
+      if(g === GESTURE.ATTACK && other.detected && other.lastCommitted === GESTURE.ATTACK &&
+         Math.abs(H.lastChangeAt - other.lastChangeAt) < COMBO_WINDOW_MS){
+        startAction(ACTION.ATTACK_DUALX);
+        return;
+      }
+
+      // Dual Shaka = Sword Rain
+      if(g === GESTURE.SHAKA && other.detected && other.lastCommitted === GESTURE.SHAKA &&
+         Math.abs(H.lastChangeAt - other.lastChangeAt) < COMBO_WINDOW_MS){
+        startAction(ACTION.RAIN);
+        return;
+      }
+
+      // Single Attack
+      if (g === GESTURE.ATTACK && !actionState.active){
+        startAction(ACTION.ATTACK_SINGLE);
+        return;
+      }
+    }
+
+    function pushStableCommit(handKey, g){
+      const H = handsState[handKey];
+      H.queue.push(g);
+      if (H.queue.length > STABLE_FRAMES) H.queue.shift();
+      if (H.queue.length === STABLE_FRAMES){
+        const same = H.queue.every(x => x === H.queue[0]);
+        if (same && !actionState.active) commitGestureFor(handKey, H.queue[0]);
+      }
+    }
+
+    // =========================
+    // 10) MediaPipe Hands
+    // =========================
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.65
+    });
+
+    let gotFirstResults = false;
+
+    function assignHandKey(results, i, lm){
+      const h = results.multiHandedness && results.multiHandedness[i];
+      if(h && h.label) return (h.label === 'Left') ? 'L' : 'R';
+      const wristX = lm[0].x;
+      return wristX < 0.5 ? 'R' : 'L';
+    }
+
+    hands.onResults((results)=>{
+      if (!gotFirstResults){
+        gotFirstResults = true;
+        loadingEl.style.display = 'none';
+      }
+
+      handsState.L.detected = false;
+      handsState.R.detected = false;
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0){
+        for(let i=0;i<results.multiHandLandmarks.length;i++){
+          const lm = results.multiHandLandmarks[i];
+          const key = assignHandKey(results, i, lm);
+          const H = handsState[key];
+
+          H.detected = true;
+          H.raw = lm;
+
+          H.palmTarget.copy(mapLmToWorld(lm[9]));
+          H.indexTarget.copy(mapLmToWorld(lm[8]));
+
+          pushStableCommit(key, detectGesture(lm));
+        }
+        updateCenterTargets();
+      } else {
+        handsState.L.raw = null; handsState.R.raw = null;
+        updateCenterTargets();
+      }
+    });
+
+    const video = document.querySelector('.input_video');
+    video.setAttribute('playsinline','');
+    video.muted = true;
+    video.autoplay = true;
+
+    async function startCameraManually(){
+      try{
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+          throw new Error('Trình duyệt không hỗ trợ getUserMedia');
+        }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = 'Đang mở camera...';
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 640, height: 480 },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        loadingEl.innerHTML = 'Đang nhận diện bàn tay...';
+
+        let busy = false;
+        async function frameLoop(){
+          try{
+            if (!busy && video.readyState >= 2){
+              busy = true;
+              await hands.send({ image: video });
+              busy = false;
+            }
+          } catch(e){
+            console.error(e);
+            busy = false;
+          }
+          requestAnimationFrame(frameLoop);
+        }
+        frameLoop();
+
+      } catch(err){
+        console.error(err);
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = 'Không mở được camera. Hãy Allow camera + dùng https/localhost.';
+        startBtn.style.display = 'block';
+      }
+    }
+
+    startBtn.addEventListener('click', ()=>{
+      startBtn.style.display = 'none';
+      startCameraManually();
+    });
+
+    // =========================
+    // 11) Helpers
+    // =========================
+    const clock = new THREE.Clock();
+    function damp(a,b,lambda,dt){ return THREE.MathUtils.damp(a,b,lambda,dt); }
+    function expLerpAlpha(lambda, dt){ return 1 - Math.exp(-lambda * dt); }
+    function setLookAtSmooth(obj, from, to, lambda, dt){
+      tmpObj.position.copy(from);
+      tmpObj.lookAt(to);
+      const t = expLerpAlpha(lambda, dt);
+      obj.quaternion.slerp(tmpObj.quaternion, t);
+    }
+    function renderFrame(){
+      if (useComposer && composer) composer.render();
+      else renderer.render(scene, camera);
+    }
+
+    // =========================
+    // 12) Formation selector (khi KHÔNG action)
+    // =========================
+    let lastFormLabel = "";
+    function showFormOnce(label){
+      if(label && label !== lastFormLabel){
+        lastFormLabel = label;
+        showSkillName(label);
+      }
+    }
+
+    function chooseFormation(){
+      const L = handsState.L, R = handsState.R;
+      if(L.detected && R.detected){
+        const gl = L.lastCommitted, gr = R.lastCommitted;
+
+        if(gl === GESTURE.WALL && gr === GESTURE.WALL) return FORM.DUAL_WALL_DOME;
+        if(gl === GESTURE.FAN && gr === GESTURE.FAN) return FORM.DUAL_FAN;
+        if(gl === GESTURE.LOTUS && gr === GESTURE.LOTUS) return FORM.DUAL_LOTUS;
+        if(gl === GESTURE.SPHERE && gr === GESTURE.SPHERE) return FORM.DUAL_SPHERE;
+        if(gl === GESTURE.SPIN && gr === GESTURE.SPIN) return FORM.DUAL_SPIN;
+        if(gl === GESTURE.POINT && gr === GESTURE.POINT) return FORM.DUAL_POINT;
+
+        if((gl === GESTURE.SPHERE && gr === GESTURE.SPIN) || (gl === GESTURE.SPIN && gr === GESTURE.SPHERE))
+          return FORM.BIND;
+
+        return FORM.DUAL_MIX;
+      }
+
+      if(R.detected) return R.lastCommitted;
+      if(L.detected) return L.lastCommitted;
+      return GESTURE.IDLE;
+    }
+
+    // =========================
+    // 13) Action updates
+    // =========================
+    const attackDir = new THREE.Vector3(0,0,-1);
+
+    function updateAction(dt, t){
+      const elapsed = (performance.now() - actionState.start) / 1000;
+
+      shake = damp(shake, 0, 7.5, dt);
+      camera.position.x = (Math.random()-0.5) * 0.32 * shake;
+      camera.position.y = (Math.random()-0.5) * 0.22 * shake;
+
+      if(rgbShiftPass) rgbShiftPass.uniforms.amount.value = damp(rgbShiftPass.uniforms.amount.value, 0.0, 6, dt);
+      renderer.toneMappingExposure = 1.05 + 0.08 * shake;
+
+      if(actionState.type === ACTION.ATTACK_SINGLE){
+        // hướng attack ưu tiên tay phải nếu có
+        const H = handsState.R.raw ? handsState.R : handsState.L;
+        if(H.raw){
+          const w = mapLmToWorld(H.raw[0]);
+          const i = mapLmToWorld(H.raw[8]);
+          attackDir.copy(i).sub(w).normalize();
+          if (!isFinite(attackDir.x)) attackDir.set(0,0,-1);
+        }
+        // phase
+        let phase = 0;
+        if(elapsed < 0.55) phase = 0;
+        else if(elapsed < 1.25) phase = 1;
+        else phase = 2;
+
+        if(phase === 2){ stopAction(); return; }
+
+        emitSparks(centerPos, attackDir, 14, 42, 0.35, 0.18, 0.45);
+
+        for(let i=0;i<swords.length;i++){
+          const s = swords[i];
+          const u = s.userData;
+
+          const pulse = 0.7 + 0.35 * Math.sin(t*7 + u.offset);
+          u.bladeMat.emissiveIntensity = pulse;
+          u.tipMat.emissiveIntensity = pulse + 0.3;
+          u.glowMat.opacity = 0.60 + 0.20 * Math.sin(t*6.0 + u.offset);
+
+          if(phase === 0){
+            const row = i % 7;
+            const col = Math.floor(i / 7);
+            const tx = centerPos.x + (row - 3) * 1.2;
+            const ty = centerPos.y + (col - 9) * 0.75;
+            const tz = -2 + col * 0.21;
+
+            s.position.x = damp(s.position.x, tx, 11, dt);
+            s.position.y = damp(s.position.y, ty, 11, dt);
+            s.position.z = damp(s.position.z, tz, 11, dt);
+
+            setLookAtSmooth(s, s.position, new THREE.Vector3(centerPos.x, centerPos.y + 90, -120), 12, dt);
+          }else{
+            s.position.addScaledVector(attackDir, 98 * dt);
+            s.rotation.z += 10 * dt;
+            if(i % 14 === 0) spawnSlash(s.position, new THREE.Vector3(attackDir.x, attackDir.y, 0), false);
+          }
+        }
+
+        if(elapsed > 0.60 && elapsed < 0.66){
+          spawnRing(centerPos, true);
+          spawnSlash(centerPos, new THREE.Vector3(attackDir.x, attackDir.y, 0), true);
+        }
+      }
+
+      if(actionState.type === ACTION.ATTACK_DUALX){
+        const L = handsState.L, R = handsState.R;
+        const dirLR = R.palmPos.clone().sub(L.palmPos).normalize();
+        const dirRL = L.palmPos.clone().sub(R.palmPos).normalize();
+
+        let phase = 0;
+        if(elapsed < 0.55) phase = 0;
+        else if(elapsed < 1.25) phase = 1;
+        else phase = 2;
+        if(phase === 2){ stopAction(); return; }
+
+        // big slash at center
+        if(elapsed > 0.58 && elapsed < 0.64){
+          spawnRing(centerPos, true);
+          spawnSlash(centerPos, dirLR, true);
+          spawnSlash(centerPos, dirRL, true);
+        }
+
+        for(let i=0;i<swords.length;i++){
+          const s = swords[i];
+          const u = s.userData;
+          const leftGroup = (i < SWORD_COUNT/2);
+
+          const pulse = 0.75 + 0.38 * Math.sin(t*7.6 + u.offset);
+          u.bladeMat.emissiveIntensity = pulse;
+          u.tipMat.emissiveIntensity = pulse + 0.35;
+          u.glowMat.opacity = 0.62 + 0.22 * Math.sin(t*6.2 + u.offset);
+
+          if(phase === 0){
+            const base = leftGroup ? L.palmPos : R.palmPos;
+            const idx = leftGroup ? i : (i - Math.floor(SWORD_COUNT/2));
+            const count = leftGroup ? Math.floor(SWORD_COUNT/2) : (SWORD_COUNT - Math.floor(SWORD_COUNT/2));
+
+            const angle = (idx / count) * Math.PI * 2 + t * 1.6;
+            const r = 4.2 + (idx%6)*0.55;
+            const tx = base.x + Math.cos(angle)*r;
+            const ty = base.y + Math.sin(angle)*r;
+            const tz = -3.5;
+
+            s.position.x = damp(s.position.x, tx, 12, dt);
+            s.position.y = damp(s.position.y, ty, 12, dt);
+            s.position.z = damp(s.position.z, tz, 12, dt);
+
+            setLookAtSmooth(s, s.position, centerPos.clone().setZ(-20), 14, dt);
+          }else{
+            const shootDir = leftGroup ? dirLR : dirRL;
+            // phóng chéo qua tâm + đâm ra sau
+            const out = shootDir.clone().multiplyScalar(0.85).add(new THREE.Vector3(0,0,-0.55)).normalize();
+            s.position.addScaledVector(out, 115*dt);
+            s.rotation.z += 12*dt;
+
+            if(i % 10 === 0) emitSparks(s.position, out, 1, 28, 0.25, 0.18, 0.35);
+          }
+        }
+      }
+
+      if(actionState.type === ACTION.NOVA){
+        let phase = 0;
+        if(elapsed < 0.45) phase = 0;
+        else if(elapsed < 1.05) phase = 1;
+        else phase = 2;
+        if(phase === 2){ stopAction(); return; }
+
+        if(elapsed > 0.50 && elapsed < 0.58){
+          spawnRing(centerPos, true);
+          spawnSlash(centerPos, new THREE.Vector3(1,0,0), true);
+        }
+
+        for(let i=0;i<swords.length;i++){
+          const s = swords[i];
+          const u = s.userData;
+
+          const pulse = 0.72 + 0.30*Math.sin(t*6.8 + u.offset);
+          u.bladeMat.emissiveIntensity = pulse;
+          u.tipMat.emissiveIntensity = pulse + 0.35;
+          u.glowMat.opacity = 0.62 + 0.20*Math.sin(t*5.8 + u.offset);
+
+          if(phase === 0){
+            const angle = (i/SWORD_COUNT)*Math.PI*4 + t*1.8;
+            const r = 2.5 + (i%7)*0.2;
+            const tx = centerPos.x + Math.cos(angle)*r;
+            const ty = centerPos.y + Math.sin(angle)*r;
+            const tz = -2.8;
+
+            s.position.x = damp(s.position.x, tx, 13, dt);
+            s.position.y = damp(s.position.y, ty, 13, dt);
+            s.position.z = damp(s.position.z, tz, 13, dt);
+
+            setLookAtSmooth(s, s.position, centerPos.clone().setZ(-40), 14, dt);
+          }else{
+            const a = (i/SWORD_COUNT)*Math.PI*2;
+            const dir = new THREE.Vector3(Math.cos(a), Math.sin(a), -0.7).normalize();
+            s.position.addScaledVector(dir, 95*dt);
+            s.rotation.z += 9*dt;
+            if(i % 12 === 0) emitSparks(s.position, dir, 1, 24, 0.35, 0.16, 0.32);
+          }
+        }
+      }
+
+      if(actionState.type === ACTION.RAIN){
+        let phase = 0;
+        if(elapsed < 0.55) phase = 0;
+        else if(elapsed < 1.65) phase = 1;
+        else phase = 2;
+        if(phase === 2){ hidePortal(); stopAction(); return; }
+
+        const portalPos = centerPos.clone(); portalPos.y += 12;
+        updatePortal(portalPos, t, 12.5);
+
+        if(elapsed > 0.62 && elapsed < 0.70) spawnRing(portalPos, true);
+
+        for(let i=0;i<swords.length;i++){
+          const s = swords[i];
+          const u = s.userData;
+
+          const pulse = 0.68 + 0.34*Math.sin(t*7.2 + u.offset);
+          u.bladeMat.emissiveIntensity = pulse;
+          u.tipMat.emissiveIntensity = pulse + 0.35;
+          u.glowMat.opacity = 0.62 + 0.20*Math.sin(t*6.0 + u.offset);
+
+          if(phase === 0){
+            const a = (i/SWORD_COUNT)*Math.PI*2 + t*3.2;
+            const r = 6.5 + (i%9)*0.35;
+            const tx = portalPos.x + Math.cos(a)*r;
+            const ty = portalPos.y + Math.sin(a)*r*0.35;
+            const tz = -14;
+
+            s.position.x = damp(s.position.x, tx, 12, dt);
+            s.position.y = damp(s.position.y, ty, 12, dt);
+            s.position.z = damp(s.position.z, tz, 12, dt);
+
+            setLookAtSmooth(s, s.position, centerPos.clone().setZ(-30), 14, dt);
+          }else{
+            // rain down
+            const xJ = (Math.random()-0.5)*0.10;
+            const dir = new THREE.Vector3(xJ, -1.2, -0.35).normalize();
+            s.position.addScaledVector(dir, 85*dt);
+
+            if(s.position.y < centerPos.y - 10){
+              // reset to portal top
+              s.position.x = portalPos.x + (Math.random()-0.5)*16;
+              s.position.y = portalPos.y + 8 + Math.random()*8;
+              s.position.z = -14 - Math.random()*6;
+              emitSparks(s.position, new THREE.Vector3(0,-1,-0.2).normalize(), 2, 22, 0.35, 0.18, 0.35);
+            }
+
+            if(i % 18 === 0) spawnSlash(s.position, new THREE.Vector3(0,-1,0), false);
+          }
+        }
+      }
+    }
+
+    // =========================
+    // 14) Non-action sword motion (formations)
+    // =========================
+    function formationTarget(gesture, idx, count, basePos, indexPos, t){
+      const g = (gesture === GESTURE.IDLE) ? GESTURE.LOTUS : gesture;
+      let tx = basePos.x, ty = basePos.y, tz = basePos.z;
+      let lookTo = null;
+      let scaleTarget = 1;
+
+      switch(g){
+        case GESTURE.LOTUS: {
+          const angle = (idx / count) * Math.PI * 4 + t * 0.85;
+          const r = 5.6 + (idx % 6) * 1.15;
+          tx = basePos.x + Math.cos(angle) * r;
+          ty = basePos.y + Math.sin(angle) * r;
+          tz = -2.0 + (idx / count) * 7.2;
+          lookTo = new THREE.Vector3(basePos.x, basePos.y, basePos.z - 30);
+          break;
+        }
+        case GESTURE.SPHERE: {
+          const phi = Math.acos(-1 + (2 * idx) / count);
+          const theta = Math.sqrt(count * Math.PI) * phi + t * 0.55;
+          const rS = 7.4;
+          tx = basePos.x + rS * Math.sin(phi) * Math.cos(theta);
+          ty = basePos.y + rS * Math.sin(phi) * Math.sin(theta);
+          tz = basePos.z + rS * Math.cos(phi) - 2;
+          lookTo = basePos.clone();
+          break;
+        }
+        case GESTURE.WALL: {
+          const cols = 12;
+          const wCol = idx % cols;
+          const wRow = Math.floor(idx / cols);
+          tx = basePos.x + (wCol - 5.5) * 2.25;
+          ty = basePos.y + (wRow - 5) * 2.25;
+          tz = basePos.z - 12;
+          lookTo = new THREE.Vector3(basePos.x, basePos.y, basePos.z - 70);
+          break;
+        }
+        case GESTURE.SPIN: {
+          const spinR = 9.2;
+          const a = (idx / count) * Math.PI * 2 + t * 7.6;
+          tx = basePos.x + Math.cos(a) * spinR;
+          ty = basePos.y + Math.sin(a) * spinR;
+          tz = basePos.z - 1.5;
+          lookTo = basePos.clone();
+          break;
+        }
+        case GESTURE.GIANT: {
+          tx = basePos.x;
+          ty = basePos.y + (idx - count/2) * 0.42;
+          tz = basePos.z - 6;
+          scaleTarget = 1.35;
+          lookTo = new THREE.Vector3(basePos.x, basePos.y + 70, basePos.z - 40);
+          break;
+        }
+        case GESTURE.POINT: {
+          const dir = indexPos.clone().sub(basePos).normalize();
+          if (!isFinite(dir.x)) dir.set(0,0,-1);
+          const along = (idx / count) * 44;
+          const wave = Math.sin(t*6 + idx*0.22)*0.55;
+          const right = new THREE.Vector3(-dir.y, dir.x, 0).normalize();
+          tx = basePos.x + dir.x * along + right.x * wave;
+          ty = basePos.y + dir.y * along + right.y * wave;
+          tz = basePos.z - 10 - along * 0.75;
+          lookTo = basePos.clone().add(dir.clone().multiplyScalar(140));
+          break;
+        }
+        case GESTURE.SHAKA: {
+          const a = (idx / count) * Math.PI * 2 + t * 2.8;
+          const pull = 1 - Math.min(1, (Math.sin(t*0.9) * 0.5 + 0.5));
+          const r = 15 - pull * 10.5;
+          tx = basePos.x + Math.cos(a) * r;
+          ty = basePos.y + Math.sin(a) * r;
+          tz = -22 + pull * 18 + Math.sin(t + idx*0.02) * 0.35;
+          lookTo = basePos.clone();
+          break;
+        }
+        case GESTURE.FAN: {
+          const fanWidth = Math.PI * 1.05;
+          const a = -fanWidth/2 + (idx / (count-1)) * fanWidth;
+          const r = 15.2;
+          tx = basePos.x + Math.cos(a) * r;
+          ty = basePos.y + Math.sin(a) * r * 0.65;
+          tz = basePos.z - 14;
+          lookTo = new THREE.Vector3(basePos.x, basePos.y, basePos.z - 90);
+          break;
+        }
+      }
+      return {tx,ty,tz,lookTo,scaleTarget};
+    }
+
+    // =========================
+    // 15) Clap detect (2 tay chụm nhanh) -> NOVA
+    // =========================
+    let prevPalmDist = 999;
+    let lastClapAt = 0;
+
+    function checkClap(dt){
+      const L = handsState.L, R = handsState.R;
+      if(!(L.detected && R.detected)) { prevPalmDist = 999; return; }
+
+      const d = L.palmPos.distanceTo(R.palmPos);
+      const speed = (prevPalmDist - d) / Math.max(0.0001, dt);
+      prevPalmDist = d;
+
+      const now = Date.now();
+      const okCooldown = (now - lastClapAt) > CLAP_COOLDOWN_MS;
+      if(okCooldown && !actionState.active && d < 7.2 && speed > 35){
+        lastClapAt = now;
+        startAction(ACTION.NOVA);
+      }
+    }
+
+    // =========================
+    // 16) Main loop
+    // =========================
+    const clockMain = new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+
+      const dt = clockMain.getDelta();
+      const t = clockMain.elapsedTime;
+
+      const smoothLambda = parseFloat(document.getElementById('smoothness').value);
+      const a = expLerpAlpha(smoothLambda, dt);
+
+      // smoothing
+      if(handsState.L.detected){
+        handsState.L.palmPos.lerp(handsState.L.palmTarget, a);
+        handsState.L.indexPos.lerp(handsState.L.indexTarget, a);
+      }
+      if(handsState.R.detected){
+        handsState.R.palmPos.lerp(handsState.R.palmTarget, a);
+        handsState.R.indexPos.lerp(handsState.R.indexTarget, a);
+      }
+
+      updateCenterTargets();
+      centerPos.lerp(centerTarget, a);
+
+      // stars drift
+      stars.rotation.y += stars.userData.rot * dt * 0.06;
+      stars.rotation.x += stars.userData.rot * dt * 0.02;
+
+      // ambient sparks near hands
+      if(anyHandDetected()){
+        handLight.position.set(centerPos.x, centerPos.y, 10);
+        const up = new THREE.Vector3(0,1,-0.2).normalize();
+        if(handsState.L.detected) emitSparks(handsState.L.palmPos, up, 3, 12, 0.95, 0.18, 0.35);
+        if(handsState.R.detected) emitSparks(handsState.R.palmPos, up, 3, 12, 0.95, 0.18, 0.35);
+      }else{
+        handLight.position.x = damp(handLight.position.x, 0, 2.5, dt);
+        handLight.position.y = damp(handLight.position.y, 0, 2.5, dt);
+      }
+
+      // FX updates
+      updateSparks(dt);
+      updateRings(dt);
+      updateSlash(dt);
+
+      // clap detect
+      checkClap(dt);
+
+      // reset extras
+      if(rgbShiftPass && !actionState.active){
+        rgbShiftPass.uniforms.amount.value = damp(rgbShiftPass.uniforms.amount.value, 0, 10, dt);
+      }
+      if(!actionState.active){
+        renderer.toneMappingExposure = damp(renderer.toneMappingExposure, 1.05, 6, dt);
+      }
+
+      // sigils
+      if(handsState.L.detected) updateSigil(sigilL, handsState.L.palmPos, t, 1.0); else { sigilL.inner.visible = sigilL.outer.visible = false; }
+      if(handsState.R.detected) updateSigil(sigilR, handsState.R.palmPos, t, 1.0); else { sigilR.inner.visible = sigilR.outer.visible = false; }
+
+      // ACTION
+      if(actionState.active){
+        hideLightning();
+        hideDome();
+        if(actionState.type !== ACTION.RAIN) hidePortal();
+        updateAction(dt, t);
+        updateSwordStreaks(dt);
+        renderFrame();
+        return;
+      }
+
+      // camera settle
+      camera.position.x = damp(camera.position.x, 0, 6, dt);
+      camera.position.y = damp(camera.position.y, 0, 6, dt);
+
+      // formation
+      const formation = chooseFormation();
+
+      // special visuals for formations
+      hidePortal();
+      hideLightning();
+      hideDome();
+
+      if(formation === FORM.DUAL_WALL_DOME){
+        showFormOnce("HỘ GIỚI THIÊN MẠC");
+        updateDome(centerPos, t, 14.5);
+        updateSigil(sigilC, centerPos, t, 1.45);
+      }else if(formation === FORM.BIND){
+        showFormOnce("KHÓA LINH LÔI LIÊN");
+        updateSigil(sigilC, centerPos, t, 1.35);
+        updateLightning(handsState.L.palmPos, handsState.R.palmPos, t, 1.0);
+      }else if(formation === FORM.DUAL_SPHERE){
+        showFormOnce("SONG THỦ KIẾM CẦU");
+        updateSigil(sigilC, centerPos, t, 1.35);
+      }else if(formation === FORM.DUAL_SPIN){
+        showFormOnce("SONG THỦ THÁI CỰC");
+        updateSigil(sigilC, centerPos, t, 1.25);
+      }else if(formation === FORM.DUAL_POINT){
+        showFormOnce("SONG CHỈ PHÁ KHÔNG");
+      }else if(formation === FORM.DUAL_FAN){
+        showFormOnce("SONG DỰC KIẾM DỰ翼");
+      }else if(formation === FORM.DUAL_LOTUS){
+        showFormOnce("SONG LIÊN HOA");
+      }else if(formation === FORM.DUAL_MIX){
+        showFormOnce("DUAL MIX");
+      }else{
+        // 1 tay
+        lastFormLabel = "";
+      }
+
+      // sword motion
+      for(let i=0;i<swords.length;i++){
+        const s = swords[i];
+        const u = s.userData;
+
+        // glow pulse
+        const pulse = 0.70 + 0.26 * Math.sin(t*5.6 + u.offset);
+        u.bladeMat.emissiveIntensity = pulse;
+        u.tipMat.emissiveIntensity = pulse + 0.28;
+        u.glowMat.opacity = 0.56 + 0.20 * Math.sin(t*5.0 + u.offset);
+
+        // boost glow by speed
+        const spd = (dt>0.00001) ? (u.vel.length()/dt) : 0;
+        const boost = Math.min(0.9, Math.max(0, (spd-25)/120));
+        u.glowMat.opacity = Math.min(0.95, u.glowMat.opacity + boost*0.35);
+        u.tipMat.emissiveIntensity += boost*0.65;
+
+        let tx=s.position.x, ty=s.position.y, tz=s.position.z;
+        let lookTo=null;
+        let scaleTarget=1;
+
+        if(!anyHandDetected()){
+          ty += Math.sin(t*1.2 + u.offset) * 0.02;
+          s.rotation.x += 0.35 * dt;
+          s.rotation.y += 0.25 * dt;
+        }else{
+          if(formation === FORM.DUAL_LOTUS || formation === FORM.DUAL_MIX || formation === FORM.DUAL_FAN){
+            const leftCount = Math.floor(SWORD_COUNT/2);
+            const leftGroup = i < leftCount;
+
+            const H = leftGroup ? handsState.L : handsState.R;
+            const idxLocal = leftGroup ? i : (i - leftCount);
+            const countLocal = leftGroup ? leftCount : (SWORD_COUNT - leftCount);
+
+            if(formation === FORM.DUAL_FAN){
+              // wings
+              const base = H.palmPos.clone();
+              base.y += 2.0;
+              const wing = leftGroup ? -1 : 1;
+              const aW = (-0.95 + (idxLocal/(countLocal-1))*1.9) + Math.sin(t*2.4)*0.12;
+              const r = 14.5;
+              tx = base.x + Math.cos(aW)*r*wing;
+              ty = base.y + Math.sin(aW)*r*0.55;
+              tz = -14 - (idxLocal/countLocal)*4.0;
+              lookTo = new THREE.Vector3(base.x, base.y, base.z - 80);
+              scaleTarget = 1.05;
+
+              if(idxLocal%12===0) emitSparks(s.position, new THREE.Vector3(wing,0,-0.2).normalize(), 1, 16, 0.25, 0.16, 0.30);
+            }else{
+              const g = (formation === FORM.DUAL_MIX) ? H.lastCommitted : GESTURE.LOTUS;
+              const out = formationTarget(g, idxLocal, countLocal, H.palmPos, H.indexPos, t);
+              tx=out.tx; ty=out.ty; tz=out.tz; lookTo=out.lookTo; scaleTarget=out.scaleTarget;
+            }
+          }
+          else if(formation === FORM.DUAL_WALL_DOME){
+            // dome: swords orbit inside dome
+            const a2 = (i/SWORD_COUNT)*Math.PI*2 + t*1.6;
+            const r = 7.5 + (i%8)*0.45;
+            tx = centerPos.x + Math.cos(a2)*r;
+            ty = centerPos.y + Math.sin(a2)*r;
+            tz = -6 - (i/SWORD_COUNT)*8;
+            lookTo = centerPos.clone().setZ(-40);
+
+            if(i%14===0 && Math.random()<0.4) emitSparks(s.position, new THREE.Vector3(Math.cos(a2),Math.sin(a2),-0.2).normalize(), 1, 18, 0.25, 0.16, 0.30);
+          }
+          else if(formation === FORM.BIND){
+            // helix between palms
+            const A = handsState.L.palmPos;
+            const B = handsState.R.palmPos;
+            const ab = B.clone().sub(A);
+            const len = Math.max(0.001, ab.length());
+            const uAxis = ab.clone().multiplyScalar(1/len);
+
+            let v = new THREE.Vector3(0,0,1).cross(uAxis);
+            if(v.length() < 0.001) v.set(1,0,0);
+            v.normalize();
+            const w = uAxis.clone().cross(v).normalize();
+
+            const s01 = i/(SWORD_COUNT-1);
+            const p = A.clone().addScaledVector(uAxis, s01*len);
+
+            const rad = 3.0 + 0.7*Math.sin(t*2.6 + u.offset);
+            const ang = s01 * Math.PI * 12 + t * 5.2 + (i%2)*Math.PI;
+            p.addScaledVector(v, Math.cos(ang)*rad);
+            p.addScaledVector(w, Math.sin(ang)*rad);
+
+            tx = p.x; ty = p.y; tz = -2.2;
+            lookTo = p.clone().add(uAxis.clone().multiplyScalar(50));
+            scaleTarget = 1.06;
+
+            if(i%10===0) spawnSlash(p, uAxis, false);
+          }
+          else if(formation === FORM.DUAL_SPHERE){
+            const L = handsState.L.palmPos, R = handsState.R.palmPos;
+            const dist = Math.max(6.5, L.distanceTo(R));
+            const rS = Math.min(16, 7.2 + dist*0.42);
+
+            const phi = Math.acos(-1 + (2 * i) / SWORD_COUNT);
+            const theta = Math.sqrt(SWORD_COUNT * Math.PI) * phi + t * 0.7;
+            tx = centerPos.x + rS * Math.sin(phi) * Math.cos(theta);
+            ty = centerPos.y + rS * Math.sin(phi) * Math.sin(theta);
+            tz = centerPos.z + rS * Math.cos(phi) - 2;
+            lookTo = centerPos.clone();
+            scaleTarget = 1.10;
+          }
+          else if(formation === FORM.DUAL_SPIN){
+            const spinR = 10.2;
+            const a2 = (i / SWORD_COUNT) * Math.PI * 2 + t * 8.8;
+            tx = centerPos.x + Math.cos(a2) * spinR;
+            ty = centerPos.y + Math.sin(a2) * spinR;
+            tz = centerPos.z - 1.5;
+            lookTo = centerPos.clone();
+
+            if(i%8===0) emitSparks(centerPos, new THREE.Vector3(Math.cos(a2),Math.sin(a2),-0.2).normalize(), 1, 18, 0.25, 0.16, 0.30);
+          }
+          else if(formation === FORM.DUAL_POINT){
+            const leftCount = Math.floor(SWORD_COUNT/2);
+            const leftGroup = i < leftCount;
+            const H = leftGroup ? handsState.L : handsState.R;
+
+            const idxLocal = leftGroup ? i : (i - leftCount);
+            const countLocal = leftGroup ? leftCount : (SWORD_COUNT - leftCount);
+
+            const base = H.palmPos;
+            const idxP = H.indexPos;
+            const dir = idxP.clone().sub(base).normalize();
+            const along = (idxLocal / countLocal) * 50;
+            const wave = Math.sin(t*6.5 + idxLocal*0.25) * 0.7;
+            const right = new THREE.Vector3(-dir.y, dir.x, 0).normalize();
+
+            tx = base.x + dir.x * along + right.x * wave;
+            ty = base.y + dir.y * along + right.y * wave;
+            tz = base.z - 12 - along * 0.8;
+            lookTo = base.clone().add(dir.clone().multiplyScalar(160));
+
+            if(idxLocal%12===0) spawnSlash(new THREE.Vector3(tx,ty,tz), dir, false);
+          }
+          else {
+            // 1 tay
+            const H = handsState.R.detected ? handsState.R : handsState.L;
+            const out = formationTarget(formation, i, SWORD_COUNT, centerPos, H.indexPos, t);
+            tx=out.tx; ty=out.ty; tz=out.tz; lookTo=out.lookTo; scaleTarget=out.scaleTarget;
+          }
+
+          // integrate
+          s.position.x = damp(s.position.x, tx, 11.8, dt);
+          s.position.y = damp(s.position.y, ty, 11.8, dt);
+          s.position.z = damp(s.position.z, tz, 11.8, dt);
+
+          if (lookTo) setLookAtSmooth(s, s.position, lookTo, 12, dt);
+
+          const sc = damp(s.scale.x, scaleTarget, 10, dt);
+          s.scale.setScalar(sc);
+        }
+      }
+
+      // big formation sigil center
+      if(formation === FORM.DUAL_SPHERE || formation === FORM.DUAL_SPIN || formation === FORM.BIND || formation === FORM.DUAL_WALL_DOME){
+        updateSigil(sigilC, centerPos, t, 1.25);
+      }else{
+        sigilC.inner.visible = sigilC.outer.visible = false;
+      }
+
+      // render
+      updateSwordStreaks(dt);
+      renderFrame();
+    }
+    animate();
+
+    // resize
+    addEventListener('resize', ()=>{
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+
+      if (useComposer && composer) composer.setSize(innerWidth, innerHeight);
+      if (bloomPass && bloomPass.setSize) bloomPass.setSize(innerWidth, innerHeight);
+    });
+
+    applyTheme();
+
+    // =========================
+    // 17) (Optional) Start hint
+    // =========================
+    showSkillName("BẮT ĐẦU • 2 TAY COMBO");
+  </script>
+</body>
+</html>

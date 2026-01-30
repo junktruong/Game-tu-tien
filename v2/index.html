@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tu Tiên Giới: Lục Đại Kiếm Trận</title>
+  <style>
+    :root{
+      --ui-cyan:#00ffff;
+      --panel-bg: rgba(0,0,0,.78);
+    }
+    body { margin: 0; overflow: hidden; background-color: #050505; font-family: 'Segoe UI', sans-serif; }
+    #canvas-container { position: absolute; inset: 0; z-index: 1; }
+
+    /* QUAN TRỌNG: đừng display:none video */
+    .input_video{
+      position: fixed;
+      width: 1px; height: 1px;
+      opacity: 0;
+      pointer-events: none;
+      left: -10px; top: -10px;
+    }
+
+    #ui-layer{
+      position:absolute; inset:0;
+      z-index:10; pointer-events:none;
+      display:flex; flex-direction:column; justify-content:space-between;
+    }
+
+    #loading{
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color: var(--ui-cyan);
+      font-size: 18px;
+      text-shadow: 0 0 12px var(--ui-cyan);
+      background: rgba(0,0,0,0.85);
+      padding: 18px 20px;
+      border: 1px solid rgba(0,255,255,.55);
+      border-radius: 12px;
+      text-align:center;
+      backdrop-filter: blur(6px);
+      z-index: 9998;
+      max-width: 640px;
+      line-height: 1.35;
+      user-select:none;
+    }
+
+    #startBtn{
+      position:absolute; top: calc(50% + 80px); left:50%; transform:translateX(-50%);
+      z-index:9999;
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.82);
+      color: var(--ui-cyan);
+      border: 1px solid rgba(0,255,255,.6);
+      cursor:pointer;
+      user-select:none;
+      pointer-events:auto;
+      font-weight: 700;
+      letter-spacing: .5px;
+      box-shadow: 0 0 18px rgba(0,255,255,.12);
+    }
+    #startBtn:active{ transform: translateX(-50%) scale(.98); }
+
+    #skill-name{
+      text-align:center; margin-top: 42px;
+      font-size: 40px; font-weight: 800; color:#fff;
+      letter-spacing: 6px; text-transform: uppercase;
+      opacity:0; transform: translateY(-10px) scale(.98);
+      transition: opacity .22s ease, transform .22s ease, filter .22s ease;
+      filter: drop-shadow(0 0 18px rgba(255,0,222,.55));
+      user-select: none;
+    }
+    #skill-name.show{
+      opacity:1; transform: translateY(0) scale(1);
+      filter: drop-shadow(0 0 30px rgba(255,0,222,.75));
+    }
+
+    #guide-panel{
+      background: linear-gradient(90deg, rgba(0,0,0,.86), rgba(0,0,0,.18));
+      padding: 16px 18px;
+      color:#fff; width: 420px;
+      border-left: 4px solid rgba(0,255,255,.8);
+      margin: 0 0 18px 0;
+      backdrop-filter: blur(6px);
+    }
+    #guide-title{
+      font-size: 18px; margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,.16);
+      padding-bottom: 6px;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,.95);
+    }
+    .move{ margin-bottom: 8px; font-size: 13px; display:flex; align-items:flex-start; gap:10px; }
+    .icon{ font-size: 20px; width: 26px; line-height: 1.1; }
+    .name{ font-weight: 700; color: var(--ui-cyan); margin-right: 6px; }
+    .desc{ font-size: 12px; color: rgba(255,255,255,.62); font-style: italic; }
+
+    #controls{
+      position:absolute; top: 16px; right: 16px; pointer-events:auto;
+      background: var(--panel-bg);
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(6px);
+      display:flex; flex-direction:column; gap:8px;
+      min-width: 270px;
+      z-index: 20;
+    }
+    label{ font-size: 12px; color: rgba(255,255,255,.75); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    select, input[type="range"]{ width: 100%; }
+    select{
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      border: 1px solid rgba(255,255,255,.12);
+      padding: 6px 8px;
+      border-radius: 10px;
+      outline: none;
+    }
+    input[type="checkbox"]{ transform: scale(1.05); }
+    .row{ display:flex; gap:10px; align-items:center; justify-content:space-between; }
+  </style>
+</head>
+
+<body>
+  <div id="loading">Đang khai mở linh trí...<br/>Nhấn “Bắt đầu Camera” để kích hoạt.</div>
+  <div id="startBtn">Bắt đầu Camera</div>
+
+  <div id="ui-layer">
+    <div id="skill-name">VẠN KIẾM QUY TÔNG</div>
+
+    <div id="guide-panel">
+      <div id="guide-title">BÍ KÍP VÕ CÔNG</div>
+
+      <div class="move"><span class="icon">✋</span><div><span class="name">Liên Hoa Trận:</span><span class="desc">Xòe tay (mặc định)</span></div></div>
+      <div class="move"><span class="icon">✊</span><div><span class="name">Hộ Thân Cầu:</span><span class="desc">Nắm tay</span></div></div>
+      <div class="move"><span class="icon">✌️</span><div><span class="name">Phá Thiên Kích:</span><span class="desc">Trỏ + Giữa (tấn công)</span></div></div>
+      <div class="move"><span class="icon">🤘</span><div><span class="name">Thiên La Võng:</span><span class="desc">Trỏ + Út (tường)</span></div></div>
+      <div class="move"><span class="icon">👌</span><div><span class="name">Thái Cực Xoáy:</span><span class="desc">Cái chạm Trỏ (xoáy)</span></div></div>
+      <div class="move"><span class="icon">👍</span><div><span class="name">Cự Kiếm Thuật:</span><span class="desc">Chỉ ngón cái</span></div></div>
+
+      <div style="height:8px"></div>
+
+      <div class="move"><span class="icon">☝️</span><div><span class="name">Truy Kiếm Thuật:</span><span class="desc">Chỉ trỏ (định hướng)</span></div></div>
+      <div class="move"><span class="icon">🤙</span><div><span class="name">Hồi Kiếm Thuật:</span><span class="desc">Shaka (triệu hồi/thu kiếm)</span></div></div>
+      <div class="move"><span class="icon">🖐️</span><div><span class="name">Tứ Tượng Kiếm Phiến:</span><span class="desc">4 ngón duỗi, cái khép</span></div></div>
+
+      <div style="height:8px"></div>
+
+      <div class="move"><span class="icon">🤏</span><div><span class="name">Phong Ấn Linh Chú:</span><span class="desc">Cái chạm Giữa</span></div></div>
+      <div class="move"><span class="icon">🤏</span><div><span class="name">Long Ảnh Kiếm Thế:</span><span class="desc">Cái chạm Áp út</span></div></div>
+      <div class="move"><span class="icon">🤏</span><div><span class="name">Phượng Vũ Kiếm Vũ:</span><span class="desc">Cái chạm Út</span></div></div>
+      <div class="move"><span class="icon">👉</span><div><span class="name">Lôi Tiễn:</span><span class="desc">“Finger gun” (tia kiếm)</span></div></div>
+      <div class="move"><span class="icon">🤟</span><div><span class="name">Tam Tài Trận:</span><span class="desc">Trỏ + Giữa + Áp út</span></div></div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <label>
+      Kiếm khí
+      <select id="swordColor">
+        <option value="cyan">Băng Lam</option>
+        <option value="gold">Hoàng Kim</option>
+        <option value="crimson">Huyết Sát</option>
+        <option value="purple">Tử Lôi</option>
+      </select>
+    </label>
+
+    <label>
+      Kiểu kiếm
+      <select id="swordStyle">
+        <option value="classic">Classic</option>
+        <option value="katana">Katana</option>
+        <option value="great">Greatsword</option>
+        <option value="spear">Spear</option>
+      </select>
+    </label>
+
+    <label>
+      Bloom
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="bloomToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Cường độ Bloom
+      <input id="bloomStrength" type="range" min="0" max="2.5" step="0.05" value="1.1" />
+    </label>
+
+    <label>
+      Vệt kiếm (Trail)
+      <span style="display:flex; align-items:center; gap:8px;">
+        <input id="trailToggle" type="checkbox" checked />
+        <span style="font-size:11px; opacity:.8;">ON</span>
+      </span>
+    </label>
+
+    <label>
+      Cường độ FX
+      <input id="fxIntensity" type="range" min="0" max="2" step="0.05" value="1.0" />
+    </label>
+
+    <label>
+      Độ mượt (lọc rung)
+      <input id="smoothness" type="range" min="6" max="18" step="1" value="12" />
+    </label>
+  </div>
+
+  <div id="canvas-container"></div>
+  <video class="input_video" playsinline muted></video>
+
+  <!-- THREE core -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- ✅ Non-module postprocessing deps for r128 -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+  <!-- MediaPipe Hands -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script>
+    // =========================
+    // 0) Secure context check
+    // =========================
+    const loadingEl = document.getElementById('loading');
+    const startBtn = document.getElementById('startBtn');
+
+    const isLocalhost = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const isSecure = window.isSecureContext || isLocalhost;
+
+    if (!isSecure){
+      loadingEl.style.display = 'block';
+      loadingEl.innerHTML =
+        'Không thể mở camera vì trang chưa an toàn.<br/>' +
+        'Hãy chạy bằng <b>https</b> hoặc <b>http://localhost</b>.<br/>' +
+        'Ví dụ: dùng Live Server (VSCode) / localhost.';
+      startBtn.style.display = 'none';
+    }
+
+    // =========================
+    // 1) CONFIG
+    // =========================
+    const SWORD_COUNT = 130;
+    const WORLD_SCALE_X = 60;
+    const WORLD_SCALE_Y = 40;
+
+    const GESTURE = {
+      IDLE:   'IDLE',
+      LOTUS:  'LOTUS',
+      SPHERE: 'SPHERE',
+      ATTACK: 'ATTACK',
+      WALL:   'WALL',
+      SPIN:   'SPIN',
+      GIANT:  'GIANT',
+      POINT:  'POINT',
+      SHAKA:  'SHAKA',
+      FAN:    'FAN',
+      MIDDLE_PINCH: 'MIDDLE_PINCH',
+      RING_PINCH:   'RING_PINCH',
+      PINKY_PINCH:  'PINKY_PINCH',
+      GUN:          'GUN',
+      THREE:        'THREE'
+    };
+
+    const THEMES = {
+      cyan:    { color: 0x00ffff, glow: 0x0044ff, fog: 0x050505 },
+      gold:    { color: 0xffd700, glow: 0xff5a1f, fog: 0x070604 },
+      crimson: { color: 0xff0033, glow: 0x550000, fog: 0x070404 },
+      purple:  { color: 0xbc13fe, glow: 0x4b0082, fog: 0x05040a }
+    };
+    let currentTheme = THEMES.cyan;
+
+    // gesture stabilizer
+    const STABLE_FRAMES = 4;
+    const GESTURE_COOLDOWN_MS = 220;
+
+    // attack
+    let isAttacking = false;
+    let attackPhase = 0;
+    let attackStart = 0;
+    const attackDir = new THREE.Vector3(0,0,-1);
+    let shake = 0;
+
+    // =========================
+    // 2) UI
+    // =========================
+    const skillNameEl = document.getElementById('skill-name');
+    function hex6(n){ return n.toString(16).padStart(6,'0'); }
+
+    function showSkillName(name){
+      skillNameEl.textContent = name;
+      skillNameEl.style.textShadow = `0 0 28px #${hex6(currentTheme.color)}, 2px 2px 0px #000`;
+      skillNameEl.classList.add('show');
+      clearTimeout(window.__skillT);
+      window.__skillT = setTimeout(()=> skillNameEl.classList.remove('show'), 1500);
+    }
+
+    // =========================
+    // 3) THREE: Scene
+    // =========================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(currentTheme.fog, 0.02);
+
+    const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1200);
+    camera.position.z = 44;
+
+    const renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true, powerPreference: "high-performance" });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
+    renderer.domElement.style.transform = "scaleX(-1)";
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(ambient);
+
+    const handLight = new THREE.PointLight(currentTheme.color, 1.4, 160, 2);
+    handLight.position.set(0,0,10);
+    scene.add(handLight);
+
+    // =========================
+    // 3.1) Postprocessing (bloom) safe init
+    // =========================
+    let composer = null;
+    let bloomPass = null;
+    let useComposer = false;
+
+    function setupComposerSafe(){
+      try{
+        composer = new THREE.EffectComposer(renderer);
+        const renderPass = new THREE.RenderPass(scene, camera);
+        composer.addPass(renderPass);
+
+        bloomPass = new THREE.UnrealBloomPass(
+          new THREE.Vector2(innerWidth, innerHeight),
+          1.1, 0.85, 0.22
+        );
+        composer.addPass(bloomPass);
+        useComposer = true;
+      }catch(e){
+        console.error("Bloom/Composer init failed:", e);
+        useComposer = false;
+        composer = null;
+        bloomPass = null;
+      }
+    }
+    setupComposerSafe();
+
+    function renderFrame(){
+      if (useComposer && composer) composer.render();
+      else renderer.render(scene, camera);
+    }
+
+    // =========================
+    // 3.2) Background stars
+    // =========================
+    function createStars(){
+      const starCount = 1100;
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(starCount * 3);
+      for(let i=0;i<starCount;i++){
+        pos[i*3+0] = (Math.random()-0.5)*260;
+        pos[i*3+1] = (Math.random()-0.5)*150;
+        pos[i*3+2] = -10 - Math.random()*360;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.6, transparent: true, opacity: 0.75, depthWrite: false });
+      const pts = new THREE.Points(geo, mat);
+      pts.userData.rot = (Math.random()*0.5 + 0.15) * (Math.random()<0.5?-1:1);
+      scene.add(pts);
+      return pts;
+    }
+    const stars = createStars();
+
+    // =========================
+    // 4) Textures
+    // =========================
+    function makeGlowTexture(){
+      const c = document.createElement('canvas');
+      c.width = c.height = 64;
+      const g = c.getContext('2d');
+      const grad = g.createRadialGradient(32,32,0, 32,32,32);
+      grad.addColorStop(0.0,'rgba(255,255,255,1)');
+      grad.addColorStop(0.2,'rgba(255,255,255,.65)');
+      grad.addColorStop(0.55,'rgba(255,255,255,.22)');
+      grad.addColorStop(1.0,'rgba(255,255,255,0)');
+      g.fillStyle = grad;
+      g.fillRect(0,0,64,64);
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      return tex;
+    }
+    function makeRadialTexture(size=128){
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const g = c.getContext('2d');
+      const r = size/2;
+      const grd = g.createRadialGradient(r,r,0, r,r,r);
+      grd.addColorStop(0.00, 'rgba(255,255,255,1)');
+      grd.addColorStop(0.15, 'rgba(255,255,255,0.55)');
+      grd.addColorStop(0.45, 'rgba(255,255,255,0.12)');
+      grd.addColorStop(1.00, 'rgba(255,255,255,0)');
+      g.fillStyle = grd;
+      g.fillRect(0,0,size,size);
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      return tex;
+    }
+    const glowTex  = makeGlowTexture();
+    const shockTex = makeRadialTexture(128);
+
+    // =========================
+    // 5) FX: shockwave + burst + beam
+    // =========================
+    const shockwaves = [];
+    function spawnShockwave(pos, colorHex, intensity=1){
+      const mat = new THREE.SpriteMaterial({
+        map: shockTex,
+        color: colorHex,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const sp = new THREE.Sprite(mat);
+      sp.position.copy(pos);
+      sp.scale.setScalar(2.6 * intensity);
+      sp.userData = { t: 0, intensity };
+      scene.add(sp);
+      shockwaves.push(sp);
+    }
+
+    const bursts = [];
+    function spawnBurst(pos, dir, colorHex, intensity=1){
+      const count = Math.max(10, Math.floor(90 * intensity));
+      const geo = new THREE.BufferGeometry();
+      const positions = new Float32Array(count*3);
+      const velocity  = new Float32Array(count*3);
+
+      for(let i=0;i<count;i++){
+        positions[i*3+0]=pos.x; positions[i*3+1]=pos.y; positions[i*3+2]=pos.z;
+        const spread = 0.9;
+        velocity[i*3+0]=(dir.x + (Math.random()-0.5)*spread) * (18 + Math.random()*16) * intensity;
+        velocity[i*3+1]=(dir.y + (Math.random()-0.5)*spread) * (18 + Math.random()*16) * intensity;
+        velocity[i*3+2]=(dir.z + (Math.random()-0.5)*spread) * (18 + Math.random()*16) * intensity;
+      }
+      geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+      const mat = new THREE.PointsMaterial({
+        size: 0.55,
+        color: colorHex,
+        transparent: true,
+        opacity: 0.88,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const pts = new THREE.Points(geo, mat);
+      pts.userData = { positions, velocity, life: 0.0, max: 0.55 };
+      scene.add(pts);
+      bursts.push(pts);
+    }
+
+    function updateFX(dt){
+      for(let i=shockwaves.length-1;i>=0;i--){
+        const s = shockwaves[i];
+        s.userData.t += dt;
+        const t = s.userData.t;
+        s.scale.multiplyScalar(1 + dt*3.3);
+        s.material.opacity = Math.max(0, 0.95 - t*1.85);
+        if (t > 0.62){
+          scene.remove(s);
+          s.material.dispose();
+          shockwaves.splice(i,1);
+        }
+      }
+
+      for(let i=bursts.length-1;i>=0;i--){
+        const b = bursts[i];
+        b.userData.life += dt;
+        const p = b.userData.positions;
+        const v = b.userData.velocity;
+
+        for(let k=0;k<p.length;k+=3){
+          p[k]   += v[k]   * dt;
+          p[k+1] += v[k+1] * dt;
+          p[k+2] += v[k+2] * dt;
+          v[k+1] -= 28 * dt; // gravity nhẹ
+        }
+        b.geometry.attributes.position.needsUpdate = true;
+        b.material.opacity = Math.max(0, 0.9 - b.userData.life*1.9);
+
+        if (b.userData.life > b.userData.max){
+          scene.remove(b);
+          b.geometry.dispose();
+          b.material.dispose();
+          bursts.splice(i,1);
+        }
+      }
+    }
+
+    // Beam (Lôi Tiễn)
+    const beamGeo = new THREE.BufferGeometry();
+    const beamPos = new Float32Array(2*3);
+    beamGeo.setAttribute('position', new THREE.BufferAttribute(beamPos,3));
+    const beamMat = new THREE.LineBasicMaterial({
+      color: currentTheme.color,
+      transparent:true,
+      opacity:0.75,
+      blending:THREE.AdditiveBlending,
+      depthWrite:false
+    });
+    const beamLine = new THREE.Line(beamGeo, beamMat);
+    beamLine.visible = false;
+    beamLine.frustumCulled = false;
+    scene.add(beamLine);
+
+    // =========================
+    // 6) Swords + Trails
+    // =========================
+    const TRAIL_POINTS = 12;
+    let trailEnabled = true;
+
+    const swords = [];
+    const tmpObj = new THREE.Object3D();
+    const tipWorld = new THREE.Vector3();
+    const tipLocal = new THREE.Vector3(0, 6.9, 0);
+
+    let swordStyle = "classic";
+    document.getElementById('swordStyle').addEventListener('change', (e)=>{
+      swordStyle = e.target.value;
+      spawnSwords();
+      applyTheme();
+    });
+
+    function createTrail(colorHex){
+      const geo = new THREE.BufferGeometry();
+      const pos = new Float32Array(TRAIL_POINTS*3);
+      geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+      const mat = new THREE.LineBasicMaterial({
+        color: colorHex,
+        transparent: true,
+        opacity: 0.34,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      });
+      const line = new THREE.Line(geo, mat);
+      line.frustumCulled = false;
+      line.visible = trailEnabled;
+      return { line, geo, pos, mat };
+    }
+    function pushTrail(tr, x,y,z){
+      const p = tr.pos;
+      for(let i=(TRAIL_POINTS-1)*3;i>=3;i-=3){
+        p[i]   = p[i-3];
+        p[i+1] = p[i-2];
+        p[i+2] = p[i-1];
+      }
+      p[0]=x; p[1]=y; p[2]=z;
+      tr.geo.attributes.position.needsUpdate = true;
+    }
+
+    function createSwordMesh(){
+      const group = new THREE.Group();
+
+      // base params per style
+      let bladeW = 0.35, bladeH = 6.6, bladeD = 0.16;
+      let tipR = 0.22, tipH = 0.75;
+      let guardW = 1.35, guardH = 0.18, guardD = 0.22;
+      let handleR = 0.12, handleH = 0.95;
+
+      if (swordStyle === "katana"){
+        bladeW = 0.28; bladeH = 7.1; bladeD = 0.14;
+        guardW = 1.05; guardH = 0.16; guardD = 0.22;
+        handleR = 0.11; handleH = 1.05;
+      } else if (swordStyle === "great"){
+        bladeW = 0.52; bladeH = 7.4; bladeD = 0.22;
+        tipR = 0.28; tipH = 0.9;
+        guardW = 1.9; guardH = 0.2; guardD = 0.28;
+        handleR = 0.14; handleH = 1.1;
+      } else if (swordStyle === "spear"){
+        bladeW = 0.26; bladeH = 5.8; bladeD = 0.14;
+        guardW = 0.7; guardH = 0.12; guardD = 0.18;
+        handleR = 0.09; handleH = 0.7;
+      }
+
+      const bladeGeo = new THREE.BoxGeometry(bladeW, bladeH, bladeD);
+      const bladeMat = new THREE.MeshStandardMaterial({
+        color: currentTheme.color,
+        emissive: currentTheme.glow,
+        emissiveIntensity: 0.7,
+        metalness: 0.35,
+        roughness: 0.20,
+        transparent: true,
+        opacity: 0.92
+      });
+      const blade = new THREE.Mesh(bladeGeo, bladeMat);
+      blade.position.y = bladeH/2;
+
+      const tipGeo = new THREE.ConeGeometry(tipR, tipH, 7);
+      const tipMat = bladeMat.clone();
+      tipMat.emissiveIntensity = 1.0;
+      const tip = new THREE.Mesh(tipGeo, tipMat);
+      tip.position.y = bladeH + tipH/2;
+      tip.rotation.x = Math.PI;
+
+      const guardGeo = new THREE.BoxGeometry(guardW, guardH, guardD);
+      const guardMat = new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.78, roughness: 0.32 });
+      const guard = new THREE.Mesh(guardGeo, guardMat);
+      guard.position.y = 0.62;
+
+      const handleGeo = new THREE.CylinderGeometry(handleR, handleR, handleH, 12);
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0x2b2b2b, metalness: 0.22, roughness: 0.72 });
+      const handle = new THREE.Mesh(handleGeo, handleMat);
+      handle.position.y = 0.15;
+
+      // aura glow
+      const auraMat = new THREE.SpriteMaterial({
+        map: glowTex,
+        color: currentTheme.color,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      });
+      const aura = new THREE.Sprite(auraMat);
+      aura.position.y = bladeH * 0.55;
+      aura.scale.set(3.7, bladeH * 1.15, 1);
+
+      // spear shaft
+      let shaft = null;
+      if (swordStyle === "spear"){
+        const shaftGeo = new THREE.CylinderGeometry(0.08, 0.08, 10.5, 10);
+        const shaftMat = new THREE.MeshStandardMaterial({ color: 0x303030, metalness: 0.15, roughness: 0.7 });
+        shaft = new THREE.Mesh(shaftGeo, shaftMat);
+        shaft.position.y = -3.2;
+        group.add(shaft);
+      }
+
+      group.add(aura, blade, tip, guard, handle);
+
+      // style tweaks
+      if (swordStyle === "katana"){
+        blade.rotation.z = 0.06;
+        tip.position.y += 0.15;
+      }
+      if (swordStyle === "great"){
+        aura.scale.set(4.4, bladeH * 1.25, 1);
+      }
+
+      group.userData = {
+        offset: Math.random() * Math.PI * 2,
+        bladeMat, tipMat, auraMat,
+        style: swordStyle
+      };
+      return group;
+    }
+
+    function spawnSwords(){
+      // remove old
+      for(const s of swords){
+        if (s.userData.trail) scene.remove(s.userData.trail.line);
+        scene.remove(s);
+      }
+      swords.length = 0;
+
+      for(let i=0;i<SWORD_COUNT;i++){
+        const s = createSwordMesh();
+        s.position.set((Math.random()-0.5)*92, (Math.random()-0.5)*58, -20 - Math.random()*22);
+        s.rotation.set(Math.random(), Math.random(), Math.random());
+        scene.add(s);
+
+        const tr = createTrail(currentTheme.color);
+        scene.add(tr.line);
+        s.userData.trail = tr;
+
+        swords.push(s);
+      }
+    }
+    spawnSwords();
+
+    // =========================
+    // 7) Theme + Controls
+    // =========================
+    function applyTheme(){
+      scene.fog.color.setHex(currentTheme.fog);
+      handLight.color.setHex(currentTheme.color);
+      beamMat.color.setHex(currentTheme.color);
+      document.documentElement.style.setProperty('--ui-cyan', `#${hex6(currentTheme.color)}`);
+
+      for(const s of swords){
+        s.userData.bladeMat.color.setHex(currentTheme.color);
+        s.userData.bladeMat.emissive.setHex(currentTheme.glow);
+        s.userData.tipMat.color.setHex(currentTheme.color);
+        s.userData.tipMat.emissive.setHex(currentTheme.glow);
+        s.userData.auraMat.color.setHex(currentTheme.color);
+        if (s.userData.trail) s.userData.trail.mat.color.setHex(currentTheme.color);
+      }
+    }
+
+    document.getElementById('swordColor').addEventListener('change', (e)=>{
+      currentTheme = THEMES[e.target.value] || THEMES.cyan;
+      applyTheme();
+    });
+
+    const bloomToggle = document.getElementById('bloomToggle');
+    const bloomStrength = document.getElementById('bloomStrength');
+    function syncBloom(){
+      if (!useComposer || !bloomPass){
+        bloomToggle.checked = false;
+        bloomToggle.disabled = true;
+        bloomStrength.disabled = true;
+        return;
+      }
+      bloomPass.strength = bloomToggle.checked ? parseFloat(bloomStrength.value) : 0;
+    }
+    bloomStrength.addEventListener('input', ()=> syncBloom());
+    bloomToggle.addEventListener('change', ()=> syncBloom());
+    syncBloom();
+
+    document.getElementById('trailToggle').addEventListener('change', (e)=>{
+      trailEnabled = e.target.checked;
+      for (const s of swords){
+        if (s.userData.trail) s.userData.trail.line.visible = trailEnabled;
+      }
+    });
+
+    // =========================
+    // 8) Hand data + smoothing
+    // =========================
+    const handTarget = new THREE.Vector3(0,0,0);
+    const handPos = new THREE.Vector3(0,0,0);
+    const indexTipTarget = new THREE.Vector3(0,0,0);
+    const indexTipPos = new THREE.Vector3(0,0,0);
+
+    const handData = { detected:false, raw:null };
+
+    function mapLmToWorld(lm){
+      return new THREE.Vector3(
+        (0.5 - lm.x) * WORLD_SCALE_X,
+        (0.5 - lm.y) * WORLD_SCALE_Y,
+        0
+      );
+    }
+
+    function damp(a,b,lambda,dt){ return THREE.MathUtils.damp(a,b,lambda,dt); }
+    function expLerpAlpha(lambda, dt){ return 1 - Math.exp(-lambda * dt); }
+    function setLookAtSmooth(obj, from, to, lambda, dt){
+      tmpObj.position.copy(from);
+      tmpObj.lookAt(to);
+      const t = expLerpAlpha(lambda, dt);
+      obj.quaternion.slerp(tmpObj.quaternion, t);
+    }
+
+    // =========================
+    // 9) Gesture detection
+    // =========================
+    function dist2(a,b){
+      const dx = a.x-b.x, dy = a.y-b.y;
+      return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    function detectGesture(lm){
+      const wrist = lm[0];
+      const thumbTip = lm[4];
+      const indexTip = lm[8];
+      const middleTip = lm[12];
+      const ringTip = lm[16];
+      const pinkyTip = lm[20];
+
+      const thumbMCP = lm[2];
+      const indexMCP = lm[5];
+      const middleMCP = lm[9];
+      const ringMCP = lm[13];
+      const pinkyMCP = lm[17];
+
+      const handSize = Math.max(0.12, dist2(wrist, middleMCP));
+      const pinchTh = handSize * 0.17;
+      const fistTh  = handSize * 0.92;
+      const extMul  = 1.26;
+
+      const isExtended = (tip, mcp) => dist2(tip, wrist) > dist2(mcp, wrist) * extMul;
+
+      const thumbOut  = isExtended(thumbTip, thumbMCP);
+      const indexOut  = isExtended(indexTip, indexMCP);
+      const middleOut = isExtended(middleTip, middleMCP);
+      const ringOut   = isExtended(ringTip, ringMCP);
+      const pinkyOut  = isExtended(pinkyTip, pinkyMCP);
+
+      const extCount = [thumbOut,indexOut,middleOut,ringOut,pinkyOut].filter(Boolean).length;
+
+      const pinchIndex  = dist2(thumbTip, indexTip)  < pinchTh;
+      const pinchMiddle = dist2(thumbTip, middleTip) < pinchTh;
+      const pinchRing   = dist2(thumbTip, ringTip)   < pinchTh;
+      const pinchPinky  = dist2(thumbTip, pinkyTip)  < pinchTh;
+
+      // ưu tiên pinch trước (ổn định)
+      if (pinchIndex)  return GESTURE.SPIN;
+      if (pinchMiddle) return GESTURE.MIDDLE_PINCH;
+      if (pinchRing)   return GESTURE.RING_PINCH;
+      if (pinchPinky)  return GESTURE.PINKY_PINCH;
+
+      // rock
+      if (indexOut && pinkyOut && !middleOut && !ringOut) return GESTURE.WALL;
+
+      // attack
+      if (indexOut && middleOut && !ringOut && !pinkyOut) return GESTURE.ATTACK;
+
+      // three fingers
+      if (indexOut && middleOut && ringOut && !pinkyOut) return GESTURE.THREE;
+
+      // finger gun
+      if (indexOut && thumbOut && !middleOut && !ringOut && !pinkyOut) return GESTURE.GUN;
+
+      // point
+      if (indexOut && !middleOut && !ringOut && !pinkyOut && !thumbOut) return GESTURE.POINT;
+
+      // shaka
+      if (thumbOut && pinkyOut && !indexOut && !middleOut && !ringOut) return GESTURE.SHAKA;
+
+      // fan: 4 ngón duỗi, cái khép
+      if (!thumbOut && indexOut && middleOut && ringOut && pinkyOut) return GESTURE.FAN;
+
+      // giant
+      if (thumbOut && !indexOut && !middleOut && !ringOut && !pinkyOut) return GESTURE.GIANT;
+
+      // sphere
+      const avgTipDist = (dist2(indexTip,wrist)+dist2(middleTip,wrist)+dist2(ringTip,wrist)+dist2(pinkyTip,wrist))/4;
+      if (avgTipDist < fistTh && extCount <= 1) return GESTURE.SPHERE;
+
+      return GESTURE.LOTUS;
+    }
+
+    let currentGesture = GESTURE.IDLE;
+    let lastCommittedGesture = GESTURE.IDLE;
+    let lastGestureChangeAt = 0;
+    const gestureQueue = [];
+
+    function commitGesture(g){
+      const now = Date.now();
+      if (now - lastGestureChangeAt < GESTURE_COOLDOWN_MS) return;
+      if (g === lastCommittedGesture) return;
+
+      lastCommittedGesture = g;
+      lastGestureChangeAt = now;
+      currentGesture = g;
+
+      switch(g){
+        case GESTURE.ATTACK: showSkillName("Phá Thiên Kích"); break;
+        case GESTURE.SPHERE: showSkillName("Hộ Thân Kiếm Cầu"); break;
+        case GESTURE.WALL:   showSkillName("Thiên La Địa Võng"); break;
+        case GESTURE.SPIN:   showSkillName("Thái Cực Kiếm Trận"); break;
+        case GESTURE.GIANT:  showSkillName("Cự Kiếm Thuật"); break;
+        case GESTURE.POINT:  showSkillName("Truy Kiếm Thuật"); break;
+        case GESTURE.SHAKA:  showSkillName("Hồi Kiếm Thuật"); break;
+        case GESTURE.FAN:    showSkillName("Tứ Tượng Kiếm Phiến"); break;
+        case GESTURE.MIDDLE_PINCH: showSkillName("Phong Ấn Linh Chú"); break;
+        case GESTURE.RING_PINCH:   showSkillName("Long Ảnh Kiếm Thế"); break;
+        case GESTURE.PINKY_PINCH:  showSkillName("Phượng Vũ Kiếm Vũ"); break;
+        case GESTURE.GUN:          showSkillName("Lôi Tiễn"); break;
+        case GESTURE.THREE:        showSkillName("Tam Tài Trận"); break;
+        case GESTURE.LOTUS:        showSkillName("Liên Hoa Trận"); break;
+      }
+
+      const fxIntensity = parseFloat(document.getElementById('fxIntensity').value);
+
+      if (handData.detected){
+        spawnShockwave(handPos, currentTheme.color, fxIntensity);
+
+        const dir = indexTipPos.clone().sub(handPos).normalize();
+        if (isFinite(dir.x)) spawnBurst(handPos, dir, currentTheme.color, fxIntensity*0.75);
+      }
+
+      if (g === GESTURE.ATTACK && !isAttacking){
+        isAttacking = true;
+        attackPhase = 0;
+        attackStart = performance.now();
+        shake = 1.0;
+      }
+    }
+
+    // =========================
+    // 10) MediaPipe Hands + Manual getUserMedia
+    // =========================
+    const hands = new Hands({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.65
+    });
+
+    let gotFirstResults = false;
+    hands.onResults((results)=>{
+      if (!gotFirstResults){
+        gotFirstResults = true;
+        loadingEl.style.display = 'none';
+      }
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0){
+        const lm = results.multiHandLandmarks[0];
+        handData.detected = true;
+        handData.raw = lm;
+
+        const palm = lm[9];
+        const idx = lm[8];
+        handTarget.copy(mapLmToWorld(palm));
+        indexTipTarget.copy(mapLmToWorld(idx));
+
+        const g = detectGesture(lm);
+
+        gestureQueue.push(g);
+        if (gestureQueue.length > STABLE_FRAMES) gestureQueue.shift();
+
+        if (gestureQueue.length === STABLE_FRAMES){
+          const same = gestureQueue.every(x => x === gestureQueue[0]);
+          if (same && !isAttacking) commitGesture(gestureQueue[0]);
+        }
+      } else {
+        handData.detected = false;
+        handData.raw = null;
+        gestureQueue.length = 0;
+        currentGesture = GESTURE.IDLE;
+        lastCommittedGesture = GESTURE.IDLE;
+        beamLine.visible = false;
+      }
+    });
+
+    const video = document.querySelector('.input_video');
+    video.setAttribute('playsinline','');
+    video.muted = true;
+    video.autoplay = true;
+
+    async function startCameraManually(){
+      try{
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+          throw new Error('Trình duyệt không hỗ trợ getUserMedia');
+        }
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML = 'Đang mở camera...';
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: 640, height: 480 },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        loadingEl.innerHTML = 'Đang nhận diện bàn tay...';
+
+        let busy = false;
+        async function frameLoop(){
+          try{
+            if (!busy && video.readyState >= 2){
+              busy = true;
+              await hands.send({ image: video });
+              busy = false;
+            }
+          } catch(e){
+            console.error(e);
+            busy = false;
+          }
+          requestAnimationFrame(frameLoop);
+        }
+        frameLoop();
+
+      } catch(err){
+        console.error(err);
+        let msg = 'Không mở được camera. ';
+        if (err.name === 'NotAllowedError') msg += 'Bạn đã chặn quyền camera (NotAllowedError).';
+        else if (err.name === 'NotFoundError') msg += 'Không tìm thấy camera (NotFoundError).';
+        else if (err.name === 'NotReadableError') msg += 'Camera đang bị app khác dùng (NotReadableError).';
+        else msg += `Lỗi: ${err.name || err.message || err}`;
+
+        loadingEl.style.display = 'block';
+        loadingEl.innerHTML =
+          msg + '<br/>' +
+          'Mẹo: vào <b>Site settings → Camera → Allow</b>,<br/>' +
+          'và đảm bảo mở bằng <b>https</b> hoặc <b>http://localhost</b>.';
+        startBtn.style.display = 'block';
+      }
+    }
+
+    startBtn.addEventListener('click', ()=>{
+      startBtn.style.display = 'none';
+      startCameraManually();
+    });
+
+    // =========================
+    // 11) Attack logic
+    // =========================
+    function updateAttack(dt, tSec){
+      const elapsed = (performance.now() - attackStart) / 1000;
+
+      if (handData.raw){
+        const w = mapLmToWorld(handData.raw[0]);
+        const i = mapLmToWorld(handData.raw[8]);
+        attackDir.copy(i).sub(w).normalize();
+        if (!isFinite(attackDir.x)) attackDir.set(0,0,-1);
+      }
+
+      if (elapsed < 0.55) attackPhase = 0;
+      else if (elapsed < 1.35) attackPhase = 1;
+      else attackPhase = 2;
+
+      if (attackPhase === 2){
+        isAttacking = false;
+        // quay về lotus mượt
+        lastCommittedGesture = GESTURE.IDLE;
+        commitGesture(GESTURE.LOTUS);
+        return;
+      }
+
+      shake = damp(shake, 0, 8, dt);
+      camera.position.x = (Math.random()-0.5) * 0.30 * shake;
+      camera.position.y = (Math.random()-0.5) * 0.20 * shake;
+
+      const gatherLambda = 10.5;
+      const shootSpeed = 92;
+
+      for(let i=0;i<swords.length;i++){
+        const s = swords[i];
+        const u = s.userData;
+
+        const pulse = 0.62 + 0.28 * Math.sin(tSec*6 + u.offset);
+        u.bladeMat.emissiveIntensity = pulse;
+        u.tipMat.emissiveIntensity = pulse + 0.2;
+        u.auraMat.opacity = 0.55 + 0.2 * Math.sin(tSec*5.2 + u.offset);
+
+        if (attackPhase === 0){
+          const row = i % 7;
+          const col = Math.floor(i / 7);
+          const tx = handPos.x + (row - 3) * 1.05;
+          const ty = handPos.y + (col - 8) * 0.72;
+          const tz = -2 + col * 0.18;
+
+          s.position.x = damp(s.position.x, tx, gatherLambda, dt);
+          s.position.y = damp(s.position.y, ty, gatherLambda, dt);
+          s.position.z = damp(s.position.z, tz, gatherLambda, dt);
+
+          setLookAtSmooth(s, s.position, new THREE.Vector3(handPos.x, handPos.y + 90, -140), 12, dt);
+
+        } else {
+          s.position.addScaledVector(attackDir, shootSpeed * dt);
+          s.rotation.z += 8.8 * dt;
+          u.auraMat.opacity = damp(u.auraMat.opacity, 0.78, 6, dt);
+        }
+
+        // trails
+        if (trailEnabled && s.userData.trail){
+          s.updateMatrixWorld();
+          tipWorld.copy(tipLocal).applyMatrix4(s.matrixWorld);
+          pushTrail(s.userData.trail, tipWorld.x, tipWorld.y, tipWorld.z);
+        }
+      }
+    }
+
+    // =========================
+    // 12) Animation loop
+    // =========================
+    const clock = new THREE.Clock();
+
+    function animate(){
+      requestAnimationFrame(animate);
+
+      const dt = clock.getDelta();
+      const t = clock.elapsedTime;
+
+      // stars drift
+      stars.rotation.y += stars.userData.rot * dt * 0.06;
+      stars.rotation.x += stars.userData.rot * dt * 0.02;
+
+      // smooth hand
+      const smoothLambda = parseFloat(document.getElementById('smoothness').value);
+      if (handData.detected){
+        const a = expLerpAlpha(smoothLambda, dt);
+        handPos.lerp(handTarget, a);
+        indexTipPos.lerp(indexTipTarget, a);
+        handLight.position.set(handPos.x, handPos.y, 10);
+      } else {
+        handLight.position.x = damp(handLight.position.x, 0, 2.5, dt);
+        handLight.position.y = damp(handLight.position.y, 0, 2.5, dt);
+      }
+
+      // FX update
+      updateFX(dt);
+
+      // attack
+      if (isAttacking){
+        updateAttack(dt, t);
+        renderFrame();
+        return;
+      }
+
+      // camera settle
+      camera.position.x = damp(camera.position.x, 0, 6, dt);
+      camera.position.y = damp(camera.position.y, 0, 6, dt);
+
+      // beam (GUN)
+      if (handData.detected && currentGesture === GESTURE.GUN){
+        beamLine.visible = true;
+
+        const dir = indexTipPos.clone().sub(handPos).normalize();
+        const end = handPos.clone().add(dir.multiplyScalar(120));
+        beamPos[0] = handPos.x; beamPos[1] = handPos.y; beamPos[2] = -10;
+        beamPos[3] = end.x;     beamPos[4] = end.y;     beamPos[5] = -160;
+        beamGeo.attributes.position.needsUpdate = true;
+
+        // beam flicker
+        const fxIntensity = parseFloat(document.getElementById('fxIntensity').value);
+        beamMat.opacity = 0.55 + 0.25*Math.sin(t*20) * fxIntensity;
+        if (Math.random() < 0.08 * fxIntensity){
+          spawnBurst(handPos.clone().add(dir.clone().multiplyScalar(10)), dir, currentTheme.color, 0.55 * fxIntensity);
+        }
+      } else {
+        beamLine.visible = false;
+      }
+
+      // formations
+      for(let i=0;i<swords.length;i++){
+        const s = swords[i];
+        const u = s.userData;
+
+        const pulse = 0.55 + 0.22 * Math.sin(t*4.8 + u.offset);
+        u.bladeMat.emissiveIntensity = pulse;
+        u.tipMat.emissiveIntensity = pulse + 0.2;
+        u.auraMat.opacity = 0.46 + 0.18 * Math.sin(t*4.1 + u.offset);
+
+        let tx = s.position.x, ty = s.position.y, tz = s.position.z;
+        let lookTo = null;
+        let scaleTarget = 1;
+
+        if (!handData.detected){
+          ty += Math.sin(t*1.2 + u.offset) * 0.02;
+          s.rotation.x += 0.35 * dt;
+          s.rotation.y += 0.25 * dt;
+        } else {
+          switch(currentGesture){
+            case GESTURE.LOTUS: {
+              const angle = (i / SWORD_COUNT) * Math.PI * 4 + t * 0.7;
+              const r = 5.4 + (i % 6) * 1.25;
+              tx = handPos.x + Math.cos(angle) * r;
+              ty = handPos.y + Math.sin(angle) * r;
+              tz = -2.0 + (i / SWORD_COUNT) * 7.2;
+              lookTo = new THREE.Vector3(handPos.x, handPos.y, handPos.z - 30);
+              break;
+            }
+            case GESTURE.SPHERE: {
+              const phi = Math.acos(-1 + (2 * i) / SWORD_COUNT);
+              const theta = Math.sqrt(SWORD_COUNT * Math.PI) * phi + t * 0.55;
+              const rS = 6.9;
+              tx = handPos.x + rS * Math.sin(phi) * Math.cos(theta);
+              ty = handPos.y + rS * Math.sin(phi) * Math.sin(theta);
+              tz = handPos.z + rS * Math.cos(phi) - 2;
+              lookTo = handPos.clone();
+              break;
+            }
+            case GESTURE.WALL: {
+              const cols = 12;
+              const wCol = i % cols;
+              const wRow = Math.floor(i / cols);
+              tx = handPos.x + (wCol - 5.5) * 2.25;
+              ty = handPos.y + (wRow - 5) * 2.25;
+              tz = handPos.z - 12;
+              lookTo = new THREE.Vector3(handPos.x, handPos.y, handPos.z - 70);
+              break;
+            }
+            case GESTURE.SPIN: {
+              const spinR = 8.6;
+              const a = (i / SWORD_COUNT) * Math.PI * 2 + t * 6.8;
+              tx = handPos.x + Math.cos(a) * spinR;
+              ty = handPos.y + Math.sin(a) * spinR;
+              tz = handPos.z - 1.5;
+              lookTo = handPos.clone();
+              break;
+            }
+            case GESTURE.GIANT: {
+              tx = handPos.x;
+              ty = handPos.y + (i - SWORD_COUNT/2) * 0.42;
+              tz = handPos.z - 7;
+              scaleTarget = 1.25;
+              lookTo = new THREE.Vector3(handPos.x, handPos.y + 70, handPos.z - 50);
+              break;
+            }
+            case GESTURE.POINT: {
+              const dir = indexTipPos.clone().sub(handPos).normalize();
+              if (!isFinite(dir.x)) dir.set(0,0,-1);
+              const along = (i / SWORD_COUNT) * 40;
+              const spread = (i % 7 - 3) * 0.35;
+              const right = new THREE.Vector3(-dir.y, dir.x, 0).normalize();
+              tx = handPos.x + dir.x * along + right.x * spread;
+              ty = handPos.y + dir.y * along + right.y * spread;
+              tz = handPos.z - 10 - along * 0.8;
+              lookTo = handPos.clone().add(dir.clone().multiplyScalar(160));
+              break;
+            }
+            case GESTURE.SHAKA: {
+              const a = (i / SWORD_COUNT) * Math.PI * 2 + t * 2.6;
+              const pull = 1 - Math.min(1, (Math.sin(t*0.8) * 0.5 + 0.5));
+              const r = 13.5 - pull * 9.5;
+              tx = handPos.x + Math.cos(a) * r;
+              ty = handPos.y + Math.sin(a) * r;
+              tz = -24 + pull * 19 + Math.sin(t + u.offset) * 0.35;
+              lookTo = handPos.clone();
+              break;
+            }
+            case GESTURE.FAN: {
+              const fanWidth = Math.PI * 0.95;
+              const a = -fanWidth/2 + (i / (SWORD_COUNT-1)) * fanWidth;
+              const r = 14.0;
+              tx = handPos.x + Math.cos(a) * r;
+              ty = handPos.y + Math.sin(a) * r * 0.62;
+              tz = handPos.z - 14;
+              lookTo = new THREE.Vector3(handPos.x, handPos.y, handPos.z - 90);
+              break;
+            }
+            case GESTURE.MIDDLE_PINCH: { // seal rings
+              const a = (i / SWORD_COUNT) * Math.PI * 2 + t * 2.6;
+              const ring = (i % 2);
+              const r = ring ? 11.2 : 6.8;
+              tx = handPos.x + Math.cos(a) * r;
+              ty = handPos.y + Math.sin(a) * r;
+              tz = handPos.z - 7 + ring*1.8*Math.sin(t*2.1);
+              lookTo = handPos.clone();
+              break;
+            }
+            case GESTURE.RING_PINCH: { // dragon curve
+              const u01 = i / (SWORD_COUNT-1);
+              const wave = Math.sin(u01 * Math.PI * 6 + t * 3.2) * 4.2;
+              tx = handPos.x + (u01 - 0.5) * 38;
+              ty = handPos.y + wave;
+              tz = handPos.z - 16 - u01*46;
+              lookTo = new THREE.Vector3(handPos.x + 90, handPos.y, handPos.z - 140);
+              break;
+            }
+            case GESTURE.PINKY_PINCH: { // meteor rain
+              const col = i % 13;
+              const row = Math.floor(i / 13);
+              tx = handPos.x + (col - 6) * 2.05;
+              ty = handPos.y + 20 - (row % 10) * 2.25;
+              tz = handPos.z - 18 - row * 0.85;
+              ty -= (t*10 + i) % 12;
+              lookTo = new THREE.Vector3(tx, ty - 50, tz);
+              break;
+            }
+            case GESTURE.GUN: { // align with beam
+              const dir = indexTipPos.clone().sub(handPos).normalize();
+              const along = i / SWORD_COUNT;
+              tx = handPos.x + dir.x * (along * 90);
+              ty = handPos.y + dir.y * (along * 90);
+              tz = handPos.z - 12 - along * 150;
+              lookTo = handPos.clone().add(dir.multiplyScalar(180));
+              break;
+            }
+            case GESTURE.THREE: { // triangle layers
+              const tri = i % 3;
+              const layer = Math.floor(i / 3);
+              const size = 7 + (layer % 12) * 0.7;
+              const ang = tri * (Math.PI * 2 / 3) + t * 0.9;
+              tx = handPos.x + Math.cos(ang) * size;
+              ty = handPos.y + Math.sin(ang) * size;
+              tz = handPos.z - 10 - layer * 0.20;
+              lookTo = handPos.clone();
+              break;
+            }
+          }
+
+          const moveLambda = 10.8;
+          s.position.x = damp(s.position.x, tx, moveLambda, dt);
+          s.position.y = damp(s.position.y, ty, moveLambda, dt);
+          s.position.z = damp(s.position.z, tz, moveLambda, dt);
+
+          if (lookTo) setLookAtSmooth(s, s.position, lookTo, 12, dt);
+
+          const sc = damp(s.scale.x, scaleTarget, 9, dt);
+          s.scale.setScalar(sc);
+
+          // trails
+          if (trailEnabled && s.userData.trail){
+            s.updateMatrixWorld();
+            tipWorld.copy(tipLocal).applyMatrix4(s.matrixWorld);
+            pushTrail(s.userData.trail, tipWorld.x, tipWorld.y, tipWorld.z);
+          }
+        }
+      }
+
+      renderFrame();
+    }
+    animate();
+
+    // =========================
+    // 13) Resize
+    // =========================
+    addEventListener('resize', ()=>{
+      camera.aspect = innerWidth/innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+
+      if (useComposer && composer){
+        composer.setSize(innerWidth, innerHeight);
+      }
+      if (bloomPass && bloomPass.setSize){
+        bloomPass.setSize(innerWidth, innerHeight);
+      }
+    });
+
+    applyTheme();
+
+  </script>
+</body>
+</html>
