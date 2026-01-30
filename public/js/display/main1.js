@@ -38,7 +38,7 @@ const combat = new CombatSystem({ hud, scheduler, fighters, vfx, sceneManager })
 const registry = new SkillRegistry();
 
 // socket
-const socket = window.io();
+const socket = window.io(window.__SOCKET_URL || undefined);
 
 socket.on("connect", ()=>{
   hud.setStatus(`✅ Connected | room=${ROOM}`);
