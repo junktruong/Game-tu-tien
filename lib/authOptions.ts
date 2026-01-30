@@ -4,9 +4,6 @@ import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
 import { getMongoClient } from './mongodb';
 
 export const authOptions: NextAuthOptions = {
-  secret:
-    process.env.NEXTAUTH_SECRET ??
-    (process.env.NODE_ENV === 'development' ? 'dev-secret' : undefined),
   adapter: MongoDBAdapter(getMongoClient()),
   providers: [
     GoogleProvider({
