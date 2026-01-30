@@ -109,6 +109,18 @@ main {
   gap: 12px;
 }
 
+.muted {
+  opacity: 0.7;
+  font-size: 14px;
+  margin: 0;
+}
+
+.hint-text {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: 0;
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -274,4 +286,23 @@ select {
   align-items: center;
   gap: 8px;
   font-size: 13px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  object-fit: cover;
 }

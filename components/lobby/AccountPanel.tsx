@@ -8,9 +8,18 @@ import Tag from '../ui/Tag';
 type AccountPanelProps = {
   account: AccountProfile;
   onChange: (account: AccountProfile) => void;
+  googleProfile?: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
 };
 
-export default function AccountPanel({ account, onChange }: AccountPanelProps) {
+export default function AccountPanel({
+  account,
+  onChange,
+  googleProfile,
+}: AccountPanelProps) {
   return (
     <Card>
       <SectionHeader
@@ -18,6 +27,18 @@ export default function AccountPanel({ account, onChange }: AccountPanelProps) {
         subtitle="Tạo profile để lưu nhân vật, skin, và dữ liệu phòng đấu."
       />
       <div className="stack">
+        {googleProfile && (
+          <div className="account-row">
+            <div className="inline">
+              <img src={googleProfile.avatar} alt="Google avatar" className="avatar" />
+              <div>
+                <strong>{googleProfile.name}</strong>
+                <p className="muted">{googleProfile.email}</p>
+              </div>
+            </div>
+            <Tag tone="emerald">Google Linked</Tag>
+          </div>
+        )}
         <Field label="Tên hiển thị">
           <input
             value={account.displayName}
