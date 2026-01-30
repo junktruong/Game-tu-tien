@@ -1,4 +1,9 @@
-export default function SectionHeader({ title, subtitle }) {
+type SectionHeaderProps = {
+  title: string;
+  subtitle?: string;
+};
+
+export default function SectionHeader({ title, subtitle }: SectionHeaderProps) {
   return (
     <div className="section-header">
       <div>

@@ -1,9 +1,20 @@
+import type { CharacterProfile } from '../../types/game';
 import Card from '../ui/Card';
 import SectionHeader from '../ui/SectionHeader';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
 
-export default function CharacterPanel({ characters, activeId, onSelect }) {
+type CharacterPanelProps = {
+  characters: CharacterProfile[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+};
+
+export default function CharacterPanel({
+  characters,
+  activeId,
+  onSelect,
+}: CharacterPanelProps) {
   const active = characters.find((item) => item.id === activeId) || characters[0];
 
   return (

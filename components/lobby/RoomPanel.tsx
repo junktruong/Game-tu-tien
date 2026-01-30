@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { ArenaProfile, RoomProfile } from '../../types/game';
 import Card from '../ui/Card';
 import SectionHeader from '../ui/SectionHeader';
 import Field from '../ui/Field';
@@ -6,7 +7,13 @@ import Button from '../ui/Button';
 import ProgressBar from '../ui/ProgressBar';
 import Tag from '../ui/Tag';
 
-export default function RoomPanel({ rooms, arenas, onCreateRoom }) {
+type RoomPanelProps = {
+  rooms: RoomProfile[];
+  arenas: ArenaProfile[];
+  onCreateRoom: (room: RoomProfile) => void;
+};
+
+export default function RoomPanel({ rooms, arenas, onCreateRoom }: RoomPanelProps) {
   const [roomId, setRoomId] = useState('');
   const [roomTitle, setRoomTitle] = useState('');
   const [isPublic, setIsPublic] = useState(true);
@@ -59,9 +66,15 @@ export default function RoomPanel({ rooms, arenas, onCreateRoom }) {
                   <ProgressBar value={room.occupancy} max={room.capacity} />
                 </div>
                 <div className="room-actions">
-                  <a href={`/display?room=${room.id}`} className="link">Display</a>
-                  <a href={`/control?room=${room.id}&player=1`} className="link">P1</a>
-                  <a href={`/control?room=${room.id}&player=2`} className="link">P2</a>
+                  <a href={`/display?room=${room.id}`} className="link">
+                    Display
+                  </a>
+                  <a href={`/control?room=${room.id}&player=1`} className="link">
+                    P1
+                  </a>
+                  <a href={`/control?room=${room.id}&player=2`} className="link">
+                    P2
+                  </a>
                 </div>
               </div>
             );

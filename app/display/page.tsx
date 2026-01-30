@@ -1,16 +1,14 @@
-import Head from 'next/head';
 import Script from 'next/script';
+
+export const metadata = {
+  title: 'Display - Tu Tiên Fight',
+};
 
 export default function Display() {
   const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
 
   return (
     <>
-      <Head>
-        <title>Display - Tu Tiên Fight</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-
       <div id="stage" />
 
       <div id="ui">

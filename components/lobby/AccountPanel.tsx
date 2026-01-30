@@ -1,10 +1,16 @@
+import type { AccountProfile } from '../../types/game';
 import Card from '../ui/Card';
 import SectionHeader from '../ui/SectionHeader';
 import Field from '../ui/Field';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
 
-export default function AccountPanel({ account, onChange }) {
+type AccountPanelProps = {
+  account: AccountProfile;
+  onChange: (account: AccountProfile) => void;
+};
+
+export default function AccountPanel({ account, onChange }: AccountPanelProps) {
   return (
     <Card>
       <SectionHeader

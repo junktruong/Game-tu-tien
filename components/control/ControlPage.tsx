@@ -1,4 +1,3 @@
-import Head from 'next/head';
 import Script from 'next/script';
 
 export default function ControlPage() {
@@ -6,11 +5,6 @@ export default function ControlPage() {
 
   return (
     <>
-      <Head>
-        <title>Control - Tu Tiên Fight</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </Head>
-
       <div id="skill-name">—</div>
 
       <div id="loading">Nhấn “Bắt đầu Camera” để kích hoạt nhận diện tay.</div>

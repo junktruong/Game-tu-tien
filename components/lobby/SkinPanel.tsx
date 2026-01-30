@@ -1,9 +1,16 @@
+import type { SkinProfile } from '../../types/game';
 import Card from '../ui/Card';
 import SectionHeader from '../ui/SectionHeader';
 import Button from '../ui/Button';
 import Tag from '../ui/Tag';
 
-export default function SkinPanel({ skins, activeId, onSelect }) {
+type SkinPanelProps = {
+  skins: SkinProfile[];
+  activeId?: string;
+  onSelect: (id: string) => void;
+};
+
+export default function SkinPanel({ skins, activeId, onSelect }: SkinPanelProps) {
   return (
     <Card>
       <SectionHeader
@@ -20,10 +27,7 @@ export default function SkinPanel({ skins, activeId, onSelect }) {
               onClick={() => onSelect(skin.id)}
             >
               <div className="inline">
-                <span
-                  className="swatch"
-                  style={{ background: skin.tone }}
-                />
+                <span className="swatch" style={{ background: skin.tone }} />
                 <div>
                   <strong>{skin.name}</strong>
                   <p>{skin.effect}</p>
