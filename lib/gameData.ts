@@ -12,7 +12,8 @@ export async function getGameData(): Promise<GameData> {
 
   const existing = await collection.findOne({});
   if (existing) {
-    return existing;
+    const { _id, ...data } = existing;
+    return data;
   }
 
   await collection.insertOne(seedData);
