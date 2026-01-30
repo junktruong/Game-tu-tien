@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tu Tiên Fight - Lobby</title>
+  <style>
+    body{margin:0; font-family:system-ui,Segoe UI,Arial; background:#07070a; color:#fff}
+    .wrap{max-width:920px; margin:0 auto; padding:28px}
+    .card{background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:18px; backdrop-filter: blur(10px)}
+    input{width:100%; padding:12px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; outline:none}
+    .row{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    a{display:inline-block; margin-top:10px; padding:12px 14px; border-radius:12px; border:1px solid rgba(0,255,255,.35); color:#00ffff; text-decoration:none; background:rgba(0,0,0,.55)}
+    a:hover{filter:brightness(1.12)}
+    .muted{opacity:.7; font-size:13px; line-height:1.45}
+    h1{margin:0 0 12px 0; letter-spacing:1px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>⚔️ Tu Tiên Fight (2 người)</h1>
+    <div class="card">
+      <div class="row">
+        <div>
+          <div class="muted">Nhập room để 2 control + 1 display cùng nhìn chung trận.</div>
+          <input id="room" placeholder="vd: demo hoặc abc123" value="demo" />
+          <a id="goDisplay" href="#">Mở Display</a>
+        </div>
+        <div>
+          <div class="muted">Mở 2 tab Control (Player 1 & Player 2). Cho phép camera cần http://localhost hoặc https.</div>
+          <a id="goP1" href="#">Mở Control - Player 1</a><br/>
+          <a id="goP2" href="#">Mở Control - Player 2</a>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:12px">
+        Gợi ý: mở <b>Display</b> trên TV/màn hình lớn, còn 2 điện thoại mở <b>Control</b> (cùng room).
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const roomEl = document.getElementById('room');
+    const goDisplay = document.getElementById('goDisplay');
+    const goP1 = document.getElementById('goP1');
+    const goP2 = document.getElementById('goP2');
+
+    function sync(){
+      const r = encodeURIComponent((roomEl.value || 'demo').trim());
+      goDisplay.href = `/display.html?room=${r}`;
+      goP1.href = `/control.html?room=${r}&player=1`;
+      goP2.href = `/control.html?room=${r}&player=2`;
+    }
+    roomEl.addEventListener('input', sync);
+    sync();
+  </script>
+</body>
+</html>
