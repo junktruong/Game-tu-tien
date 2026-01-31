@@ -37,40 +37,14 @@ export class StickFighter {
     };
 
     // Load Texture
-    const loader = new THREE.TextureLoader();
+    this.textureLoader = new THREE.TextureLoader();
     const url = textureUrl || "/img/stick_fighter_sheet.png";
     this.skinKey = skinKey || "default";
-
-    this.texture = loader.load(
-      url,
-      () => {},
-      undefined,
-      (err) => console.error("Lỗi load ảnh:", err)
-    );
-
-    // ===== FIX MÀU: đảm bảo texture dùng sRGB =====
-    // Three r152+:
-    if ("colorSpace" in this.texture) {
-      this.texture.colorSpace = THREE.SRGBColorSpace;
-    } else if ("encoding" in this.texture) {
-      // Three cũ:
-      this.texture.encoding = THREE.sRGBEncoding;
-    }
-    this.texture.needsUpdate = true;
-
-    // Wrap + repeat đúng sprite sheet
-    this.texture.wrapS = THREE.RepeatWrapping;
-    this.texture.wrapT = THREE.RepeatWrapping;
-    this.texture.repeat.set(1 / this.tilesHoriz, 1 / this.tilesVert);
-    this.texture.offset.set(0, 1 - (1 / this.tilesVert));
-
-    // Filter: sprite bạn là vẽ smooth -> Linear đẹp hơn Nearest (Nearest dễ “răng cưa/đổi màu” ở biên)
-    this.texture.magFilter = THREE.LinearFilter;
-    this.texture.minFilter = THREE.LinearMipMapLinearFilter;
+    this.texture = null;
 
     // ===== Material CHÍNH: luôn trắng để KHÔNG bị tint (đè màu) =====
     this.mat = new THREE.MeshBasicMaterial({
-      map: this.texture,
+      map: null,
       transparent: true,
       side: THREE.DoubleSide,
       color: 0xffffff,      // <<< giữ nguyên màu ảnh
@@ -150,7 +124,48 @@ export class StickFighter {
     };
 
     // set frame initial
-    this.updateTextureOffset();
+    this.setTextureUrl(url, this.skinKey);
+  }
+
+  _applyTextureSettings(texture) {
+    const THREE = window.THREE;
+
+    if ("colorSpace" in texture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+    } else if ("encoding" in texture) {
+      texture.encoding = THREE.sRGBEncoding;
+    }
+    texture.needsUpdate = true;
+
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1 / this.tilesHoriz, 1 / this.tilesVert);
+    texture.offset.set(0, 1 - (1 / this.tilesVert));
+
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipMapLinearFilter;
+  }
+
+  setTextureUrl(url, skinKey) {
+    if (!url || (this.skinKey === skinKey && this.texture?.image?.src === url)) {
+      return;
+    }
+    this.skinKey = skinKey || this.skinKey;
+
+    this.textureLoader.load(
+      url,
+      (tex) => {
+        if (this.texture) {
+          this.texture.dispose?.();
+        }
+        this.texture = tex;
+        this._applyTextureSettings(tex);
+        this.mat.map = tex;
+        this.updateTextureOffset();
+      },
+      undefined,
+      (err) => console.error("Lỗi load ảnh:", err)
+    );
   }
 
   // ===== Flash overlay (không tint texture) =====

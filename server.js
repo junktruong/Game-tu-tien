@@ -55,6 +55,13 @@ function makeLimiter({ ratePerSec, burst }) {
   };
 }
 
+function sanitizeKey(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
+}
+
 io.on("connection", (socket) => {
   socket.data.room = null;
   socket.data.role = null;
@@ -149,6 +156,27 @@ io.on("connection", (socket) => {
 
   socket.on("input", handleInput);
   socket.on("skill", handleInput); // backward compat
+
+  socket.on("loadout", (payload) => {
+    const r = socket.data.room;
+    if (!r) return;
+    if (socket.data.role !== "player") return;
+    const player = socket.data.player;
+    if (player !== 1 && player !== 2) return;
+
+    const loadout = {
+      skin: sanitizeKey(payload?.skin),
+      swordType: sanitizeKey(payload?.swordType),
+      swordSkin: sanitizeKey(payload?.swordSkin),
+    };
+
+    io.to(r).emit("loadout", {
+      at: Date.now(),
+      room: r,
+      player,
+      loadout,
+    });
+  });
 
   socket.on("aim", (payload) => {
     const r = socket.data.room;

@@ -32,6 +32,14 @@ const resolveFighterTexture = (loadout) => {
   return skin?.textureUrl || "/img/stick_fighter_sheet.png";
 };
 
+const normalizeLoadout = (loadout = {}) => ({
+  skin: FIGHTER_SKINS[loadout.skin] ? loadout.skin : "default",
+  swordType: SWORD_TYPES[loadout.swordType] ? loadout.swordType : "katana",
+  swordSkin: SWORD_SKINS[loadout.swordSkin] ? loadout.swordSkin : "default",
+});
+
+const playerLoadouts = PLAYER_LOADOUTS.map((loadout) => normalizeLoadout(loadout));
+
 // fighters
 const fighters = [
   new StickFighter(sceneManager.scene, {
@@ -39,21 +47,21 @@ const fighters = [
     x: -25,
     facing: 1,
     glowTex,
-    textureUrl: resolveFighterTexture(PLAYER_LOADOUTS[0]),
-    skinKey: PLAYER_LOADOUTS[0]?.skin,
+    textureUrl: resolveFighterTexture(playerLoadouts[0]),
+    skinKey: playerLoadouts[0]?.skin,
   }),
   new StickFighter(sceneManager.scene, {
     colorHex: 0xff4fd8,
     x: 25,
     facing: -1,
     glowTex,
-    textureUrl: resolveFighterTexture(PLAYER_LOADOUTS[1]),
-    skinKey: PLAYER_LOADOUTS[1]?.skin,
+    textureUrl: resolveFighterTexture(playerLoadouts[1]),
+    skinKey: playerLoadouts[1]?.skin,
   }),
 ];
 
 // vfx + combat
-const vfx = new VFXManager(sceneManager.scene, glowTex, swordFactory, PLAYER_LOADOUTS);
+const vfx = new VFXManager(sceneManager.scene, glowTex, swordFactory, playerLoadouts);
 const combat = new CombatSystem({ hud, scheduler, fighters, vfx, sceneManager });
 const registry = new SkillRegistry();
 
@@ -68,6 +76,14 @@ socket.on("connect", ()=>{
 
 socket.on("roster", (r)=>{
   hud.setStatus(`room=${ROOM} | P1:${r.p1?'ON':'OFF'} P2:${r.p2?'ON':'OFF'} | Display:${r.displayCount}`);
+});
+
+socket.on("loadout", (payload)=>{
+  const player = payload?.player === 2 ? 1 : 0;
+  const next = normalizeLoadout(payload?.loadout || {});
+  playerLoadouts[player] = next;
+  vfx.loadouts = playerLoadouts;
+  fighters[player].setTextureUrl(resolveFighterTexture(next), next.skin);
 });
 
 socket.on("input", (msg)=>{
