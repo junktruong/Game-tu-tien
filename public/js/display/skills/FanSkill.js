@@ -34,6 +34,7 @@ export class FanSkill extends BaseSkill {
           fromFighter: fighters[attacker],
           getTargetPos: () => combat.getHitPoint(defender),
           colorHex: col,
+          attackerIndex: attacker,
 
           visualSwords: orbitSwords,
           hits: shots,
@@ -96,7 +97,7 @@ export class FanSkill extends BaseSkill {
               combat.hitReact(attacker, defender, heavy);
               combat.applyDamage(attacker, defender, dmgEach);
               vfx.spawnBurstAt(to.clone(), col, 0.9);
-            });
+            }, { attackerIndex: attacker });
           });
         }
       });

@@ -130,6 +130,30 @@
         <option value="2">Player 2</option>
       </select>
     </label>
+    <label>
+      Skin
+      <select id="skinSelect">
+        <option value="default">Default</option>
+        <option value="chuan">Chuan</option>
+        <option value="alt">Alt</option>
+      </select>
+    </label>
+    <label>
+      Sword Type
+      <select id="swordTypeSelect">
+        <option value="katana">Katana</option>
+        <option value="greatsword">Greatsword</option>
+        <option value="needle">Needle</option>
+      </select>
+    </label>
+    <label>
+      Sword Skin
+      <select id="swordSkinSelect">
+        <option value="default">Default</option>
+        <option value="moonlight">Moonlight</option>
+        <option value="dusk">Dusk</option>
+      </select>
+    </label>
     <button id="joinBtn" class="btn">Kết nối Room</button>
     <div class="hint">Test nhanh: <b>Q/W/E/R/T/Y/U/I</b></div>
   </div>
@@ -175,6 +199,9 @@
     const roomInput = document.getElementById('roomInput');
     const playerSelect = document.getElementById('playerSelect');
     const joinBtn = document.getElementById('joinBtn');
+    const skinSelect = document.getElementById('skinSelect');
+    const swordTypeSelect = document.getElementById('swordTypeSelect');
+    const swordSkinSelect = document.getElementById('swordSkinSelect');
 
     const qs = new URLSearchParams(location.search);
     roomInput.value = (qs.get('room') || 'demo').trim() || 'demo';
@@ -184,6 +211,58 @@
     let ROOM = roomInput.value.trim() || 'demo';
     let PLAYER = Number(playerSelect.value) === 2 ? 2 : 1;
     let joinedOk = false;
+
+    const LOADOUT_KEYS = {
+      skin: ['default', 'chuan', 'alt'],
+      swordType: ['katana', 'greatsword', 'needle'],
+      swordSkin: ['default', 'moonlight', 'dusk'],
+    };
+
+    const DEFAULT_LOADOUTS = {
+      1: { skin: 'default', swordType: 'katana', swordSkin: 'default' },
+      2: { skin: 'chuan', swordType: 'greatsword', swordSkin: 'moonlight' },
+    };
+
+    function loadLoadout(player){
+      const key = `tutien_loadout_p${player}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          return {
+            skin: LOADOUT_KEYS.skin.includes(parsed?.skin) ? parsed.skin : DEFAULT_LOADOUTS[player].skin,
+            swordType: LOADOUT_KEYS.swordType.includes(parsed?.swordType) ? parsed.swordType : DEFAULT_LOADOUTS[player].swordType,
+            swordSkin: LOADOUT_KEYS.swordSkin.includes(parsed?.swordSkin) ? parsed.swordSkin : DEFAULT_LOADOUTS[player].swordSkin,
+          };
+        } catch (e) {
+          return { ...DEFAULT_LOADOUTS[player] };
+        }
+      }
+      return { ...DEFAULT_LOADOUTS[player] };
+    }
+
+    function saveLoadout(player, loadout){
+      const key = `tutien_loadout_p${player}`;
+      localStorage.setItem(key, JSON.stringify(loadout));
+    }
+
+    function getCurrentLoadout(){
+      const skin = LOADOUT_KEYS.skin.includes(skinSelect.value) ? skinSelect.value : DEFAULT_LOADOUTS[PLAYER].skin;
+      const swordType = LOADOUT_KEYS.swordType.includes(swordTypeSelect.value) ? swordTypeSelect.value : DEFAULT_LOADOUTS[PLAYER].swordType;
+      const swordSkin = LOADOUT_KEYS.swordSkin.includes(swordSkinSelect.value) ? swordSkinSelect.value : DEFAULT_LOADOUTS[PLAYER].swordSkin;
+      return { skin, swordType, swordSkin };
+    }
+
+    function applyLoadoutToUI(loadout){
+      skinSelect.value = loadout.skin;
+      swordTypeSelect.value = loadout.swordType;
+      swordSkinSelect.value = loadout.swordSkin;
+    }
+
+    function sendLoadout(){
+      if (!socket || !socket.connected || !joinedOk) return;
+      socket.emit('loadout', getCurrentLoadout());
+    }
 
     function setNet(s){ netText.textContent = s; }
 
@@ -201,6 +280,7 @@
         socket.on('joined', (info)=>{
           joinedOk = true;
           setNet(`🟢 Joined room=${info.room} | Player ${info.player}`);
+          sendLoadout();
         });
         socket.on('roster', (r)=>{
           if (!joinedOk) return;
@@ -221,8 +301,35 @@
       }
     }
 
+    function syncPlayerLoadout(){
+      const playerLoadout = loadLoadout(PLAYER);
+      applyLoadoutToUI(playerLoadout);
+      saveLoadout(PLAYER, playerLoadout);
+      if (joinedOk) sendLoadout();
+    }
+
     joinBtn.addEventListener('click', connectAndJoin);
+    playerSelect.addEventListener('change', ()=>{
+      PLAYER = Number(playerSelect.value) === 2 ? 2 : 1;
+      syncPlayerLoadout();
+    });
+    skinSelect.addEventListener('change', ()=>{
+      const loadout = getCurrentLoadout();
+      saveLoadout(PLAYER, loadout);
+      sendLoadout();
+    });
+    swordTypeSelect.addEventListener('change', ()=>{
+      const loadout = getCurrentLoadout();
+      saveLoadout(PLAYER, loadout);
+      sendLoadout();
+    });
+    swordSkinSelect.addEventListener('change', ()=>{
+      const loadout = getCurrentLoadout();
+      saveLoadout(PLAYER, loadout);
+      sendLoadout();
+    });
     connectAndJoin();
+    syncPlayerLoadout();
 
     // ======= GIỮ NGUYÊN: gesture names =======
     const GESTURE = {

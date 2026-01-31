@@ -38,7 +38,7 @@ export class BasicAttackSkill extends BaseSkill {
           if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
           combat.hitReact(attacker, defender, false);
           combat.applyDamage(attacker, defender, meta.combo1Dmg);
-        });
+        }, { attackerIndex: attacker });
         return;
       }
 
@@ -61,7 +61,7 @@ export class BasicAttackSkill extends BaseSkill {
               if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
               combat.hitReact(attacker, defender, false);
               combat.applyDamage(attacker, defender, meta.combo2DmgEach);
-            });
+            }, { attackerIndex: attacker });
           });
         }
         return;
@@ -90,7 +90,7 @@ export class BasicAttackSkill extends BaseSkill {
             const heavy = (k === Math.floor(count/2));
             combat.hitReact(attacker, defender, heavy);
             combat.applyDamage(attacker, defender, dmgEach);
-          });
+          }, { attackerIndex: attacker });
         });
       }
 

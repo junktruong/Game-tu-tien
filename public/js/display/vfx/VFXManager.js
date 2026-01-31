@@ -5,10 +5,11 @@ function lerp(a, b, t){ return a + (b - a) * t; }
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 
 export class VFXManager {
-  constructor(scene, glowTex, swordFactory){
+  constructor(scene, glowTex, swordFactory, loadouts = []){
     this.scene = scene;
     this.glowTex = glowTex;
     this.swordFactory = swordFactory;
+    this.loadouts = loadouts;
 
     this.projectiles = [];
     this.slashes = [];
@@ -183,8 +184,27 @@ export class VFXManager {
     mesh.quaternion.copy(q);
   }
 
+  _getLoadout(attackerIndex){
+    if (!Array.isArray(this.loadouts)) return null;
+    return this.loadouts[attackerIndex] || this.loadouts[0] || null;
+  }
+
+  _createSwordProjectile(colorHex, opts = {}){
+    if (opts?.type || opts?.skin){
+      return this.swordFactory.createSwordProjectile(colorHex, {
+        type: opts.type,
+        skin: opts.skin,
+      });
+    }
+    const loadout = this._getLoadout(opts?.attackerIndex);
+    return this.swordFactory.createSwordProjectile(colorHex, {
+      type: loadout?.swordType,
+      skin: loadout?.swordSkin,
+    });
+  }
+
   // ===== delayed spawn wrapper (không dùng setTimeout cho từng kiếm) =====
-  _spawnDelayedProjectileToTarget(from, to, colorHex, speed, wobble, arc, delaySec, onHit){
+  _spawnDelayedProjectileToTarget(from, to, colorHex, speed, wobble, arc, delaySec, onHit, opts = {}){
     this.projectiles.push({
       __delayed: true,
       __delay: delaySec,
@@ -194,7 +214,8 @@ export class VFXManager {
       __speed: speed,
       __wobble: wobble,
       __arc: arc,
-      __onHit: onHit
+      __onHit: onHit,
+      __opts: opts,
     });
   }
 
@@ -212,7 +233,7 @@ export class VFXManager {
   spawnProjectileBezier(from, to, colorHex, speed, opts = {}){
     const THREE = window.THREE;
 
-    const p = this.swordFactory.createSwordProjectile(colorHex);
+    const p = this._createSwordProjectile(colorHex, opts);
     p.position.copy(from);
     this.scene.add(p);
 
@@ -251,9 +272,9 @@ export class VFXManager {
   }
 
   // ===== base projectile (thẳng / arc) =====
-  spawnProjectileToTarget(from, to, colorHex, speed, wobble=0, arc=0, onHit=null){
+  spawnProjectileToTarget(from, to, colorHex, speed, wobble=0, arc=0, onHit=null, opts = {}){
     const THREE = window.THREE;
-    const p = this.swordFactory.createSwordProjectile(colorHex);
+    const p = this._createSwordProjectile(colorHex, opts);
     p.position.copy(from);
     this.scene.add(p);
 
@@ -343,6 +364,8 @@ export class VFXManager {
     if (!st) return;
     if (st.rings.length >= st.maxRings) return;
 
+    const loadout = this._getLoadout(ownerIndex);
+
     const ringIndex = st.rings.length;
     const height = st.baseHeight + ringIndex * st.heightStep;
     const radius = st.baseRadius + ringIndex * st.radiusStep;
@@ -355,7 +378,10 @@ export class VFXManager {
     const count = st.countPerRing;
 
     for (let i=0; i<count; i++){
-      const s = this.swordFactory.createSwordProjectile(st.colorHex);
+      const s = this.swordFactory.createSwordProjectile(st.colorHex, {
+        type: loadout?.swordType,
+        skin: loadout?.swordSkin,
+      });
 
       // nhẹ + gọn
     s.scale.setScalar(0.70);
@@ -411,6 +437,7 @@ export class VFXManager {
 
     // gom kiếm visible theo vòng cao -> thấp
     const rings = st.rings.slice().reverse();
+    const loadout = this._getLoadout(ownerIndex);
     const todo = [];
     for (const r of rings){
       for (const s of r.swords){
@@ -432,7 +459,17 @@ export class VFXManager {
       const to = getTargetPos().clone();
       const delay = i * cadenceSec;
 
-      this._spawnDelayedProjectileToTarget(from, to, st.colorHex, speed, 0, arc, delay, onHit);
+      this._spawnDelayedProjectileToTarget(
+        from,
+        to,
+        st.colorHex,
+        speed,
+        0,
+        arc,
+        delay,
+        onHit,
+        { type: loadout?.swordType, skin: loadout?.swordSkin }
+      );
 
       // rút kiếm khỏi vòng ngay
       s.visible = false;
@@ -480,6 +517,7 @@ export class VFXManager {
   // ===== Shield =====
   spawnShield(ownerFighter, colorHex, type, ownerIndex){
   const THREE = window.THREE;
+  const loadout = this._getLoadout(ownerIndex);
   // NOTE: type is "WALL" or "SPHERE"
   // - SPHERE: nhiều kiếm dựng dọc quay quanh nhân vật
   // - WALL: tháp trấn yêu dựng đứng trước mặt
@@ -509,7 +547,10 @@ export class VFXManager {
 
   const swords = [];
   for (let i = 0; i < count; i++){
-    const s = this.swordFactory.createSwordProjectile(colorHex);
+    const s = this.swordFactory.createSwordProjectile(colorHex, {
+      type: loadout?.swordType,
+      skin: loadout?.swordSkin,
+    });
 
     // nhẹ bớt trail/glow để không lòe quá
     if (s.userData?.trail?.material) s.userData.trail.material.opacity = 0.14;
@@ -609,6 +650,7 @@ export class VFXManager {
     fromFighter,
     getTargetPos,
     colorHex,
+    attackerIndex = 0,
     visualSwords = 72,
     hits = 10,
     orbitSec = 0.55,
@@ -617,20 +659,13 @@ export class VFXManager {
     arc = 10.0,
     onHit = null
   }){
-    const THREE = window.THREE;
-
-    const geo = new THREE.CylinderGeometry(0.10, 0.22, 6.2, 7);
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: colorHex,
-      emissiveIntensity: 1.45,
-      transparent:true,
-      opacity: 0.86,
-      roughness: 0.1,
-      metalness: 0.2
+    const loadout = this._getLoadout(attackerIndex);
+    const mesh = this.swordFactory.createInstancedSwordMesh({
+      colorHex,
+      count: visualSwords,
+      type: loadout?.swordType,
+      skin: loadout?.swordSkin,
     });
-
-    const mesh = new THREE.InstancedMesh(geo, mat, visualSwords);
     mesh.frustumCulled = false;
     this.scene.add(mesh);
 
@@ -696,7 +731,8 @@ export class VFXManager {
             pr.__start, pr.__target,
             pr.__color, pr.__speed,
             pr.__wobble ?? 0, pr.__arc ?? 0,
-            pr.__onHit ?? null
+            pr.__onHit ?? null,
+            pr.__opts ?? {}
           );
           this.projectiles.splice(i, 1);
         }
