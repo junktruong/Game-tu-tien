@@ -32,6 +32,7 @@ export default function HomeClient({ data }: HomeClientProps) {
   // ✅ refs cho canvas
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const didInitRef = useRef(false);
 
   useEffect(() => {
     if (!session?.user) return;
@@ -69,14 +70,22 @@ export default function HomeClient({ data }: HomeClientProps) {
   // ✅ INIT THREE PROFILE CANVAS
   // =========================
   useEffect(() => {
+    if (didInitRef.current) {
+      return;
+    }
+    if (!profile) {
+      return;
+    }
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) {
+      return;
+    }
+    didInitRef.current = true;
     let raf = 0;
     let destroyed = false;
 
     const init = async () => {
-      const canvas = canvasRef.current;
-      const wrap = wrapRef.current;
-      if (!canvas || !wrap) return;
-
       // 1) Load three và gán window.THREE (vì StickFighter đang dùng window.THREE)
       if (!window.THREE) {
         const THREE = await import('three');
@@ -173,14 +182,17 @@ export default function HomeClient({ data }: HomeClientProps) {
       .then((fn) => {
         cleanup = fn;
       })
-      .catch((e) => console.error('Profile canvas init failed:', e));
+      .catch((e) => {
+        didInitRef.current = false;
+        console.error('Profile canvas init failed:', e);
+      });
 
     return () => {
       destroyed = true;
       if (cleanup) cleanup();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // init 1 lần
+  }, [profile]); // init sau khi profile đã sẵn sàng
 
   // ✅ mỗi khi activeSkin đổi -> gọi updateProfileSkin
   useEffect(() => {

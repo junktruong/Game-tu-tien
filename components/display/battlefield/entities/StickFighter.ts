@@ -21,6 +21,7 @@ export class StickFighter {
   currentAction: number;
   currentFrame: number;
   lastFrameTime: number;
+  frameTimer: number;
   anim: {
     mode: string;
     t: number;
@@ -143,6 +144,7 @@ export class StickFighter {
     this.currentAction = this.actions.IDLE;
     this.currentFrame = 0;
     this.lastFrameTime = 0;
+    this.frameTimer = 0;
 
     this.anim = {
       mode: "idle",
@@ -239,6 +241,7 @@ export class StickFighter {
       this.currentAction = newAction;
       this.currentFrame = 0;
       this.lastFrameTime = 0;
+      this.frameTimer = 0;
       this.updateTextureOffset();
     }
   }
@@ -299,25 +302,15 @@ export class StickFighter {
     this.group.position.x = this.baseX + offsetX;
 
     // --- B. ANIMATION SPRITE ---
-    if (now - this.lastFrameTime > this.tileDispDuration) {
+    this.frameTimer += dt;
+    const frameDuration = this.tileDispDuration / 1000;
+    if (this.frameTimer >= frameDuration) {
+      this.frameTimer -= frameDuration;
       this.lastFrameTime = now;
 
       const maxFrames = this.actionFrames[this.currentAction] || this.tilesHoriz;
 
-      this.currentFrame++;
-
-      if (this.currentFrame >= maxFrames) {
-        // one-shot: giữ frame cuối
-        if (
-          this.currentAction === this.actions.ATTACK ||
-          this.currentAction === this.actions.SKILL ||
-          this.currentAction === this.actions.HEAVY_ATTACK
-        ) {
-          this.currentFrame = maxFrames - 1;
-        } else {
-          this.currentFrame = 0;
-        }
-      }
+      this.currentFrame = (this.currentFrame + 1) % maxFrames;
 
       this.updateTextureOffset();
     }
