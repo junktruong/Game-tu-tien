@@ -55,6 +55,7 @@ export const SKILLS = Object.freeze({
       combo3TotalDmg: 18,
 
       projectileSpeed: 58,
+      sword: { type: "classic", skin: "arcane", style: "factory" },
     }
   },
 
@@ -100,7 +101,8 @@ export const SKILLS = Object.freeze({
       radius: 5.6,        // vortex radius
       spinSpeed: 10.5,    // angular speed
       arc: 1.0,           // nhẹ nhàng nhấp nhô
-      wobble: 0.9
+      wobble: 0.9,
+      sword: { type: "spear", skin: "jade", style: "energy" }
     }
   },
 
@@ -120,7 +122,8 @@ export const SKILLS = Object.freeze({
     anim: { charge: 0.22, swing: 0.28, step: 0.85, lean: 0.14, slashFrom: 0.95, slashTo: -1.25 },
     meta: {
       // GiantSkill hiện bắn 2 phát (shots=2). Dmg cân bằng theo ý bạn.
-      dmgEach: 18
+      dmgEach: 18,
+      sword: { type: "great", skin: "obsidian", style: "factory" }
     }
   },
 
@@ -155,7 +158,8 @@ export const SKILLS = Object.freeze({
       dmgEach: 5,
 
       spread: 2.2,        // độ lệch target mỗi shot
-      cadenceSec: 0.08    // nhịp bắn
+      cadenceSec: 0.08,   // nhịp bắn
+      sword: { type: "katana", skin: "crimson", style: "factory" }
     }
   },
 
@@ -221,7 +225,8 @@ export const SKILLS = Object.freeze({
       ultOrbitSec: 0.45,
       ultLaunchSec: 0.58,
       ultSpread: 3.0,
-      ultArc: 7.5
+      ultArc: 7.5,
+      ultSword: { type: "classic", skin: "arcane", style: "energy" }
     }
   },
 });

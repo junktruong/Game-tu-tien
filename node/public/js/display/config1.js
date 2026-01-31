@@ -55,6 +55,7 @@ export const SKILLS = Object.freeze({
       combo3TotalDmg: 18,
 
       projectileSpeed: 58,
+      sword: { type: "classic", skin: "arcane", style: "factory" },
     }
   },
 
@@ -100,7 +101,8 @@ export const SKILLS = Object.freeze({
       radius: 5.6,        // vortex radius
       spinSpeed: 10.5,    // angular speed
       arc: 1.0,           // nhẹ nhàng nhấp nhô
-      wobble: 0.9
+      wobble: 0.9,
+      sword: { type: "spear", skin: "jade", style: "energy" }
     }
   },
 
@@ -132,7 +134,8 @@ export const SKILLS = Object.freeze({
       spreadY: 6.0,       // loe dọc (y offset)
       dropSpeed: 75,      // tốc độ rơi
       warningSec: 0.22,   // delay báo hiệu
-      burstScale: 1.0
+      burstScale: 1.0,
+      sword: { type: "great", skin: "obsidian", style: "factory" }
     }
   },
 
@@ -167,7 +170,8 @@ export const SKILLS = Object.freeze({
       dmgEach: 5,
 
       spread: 2.2,        // độ lệch target mỗi shot
-      cadenceSec: 0.08    // nhịp bắn
+      cadenceSec: 0.08,   // nhịp bắn
+      sword: { type: "katana", skin: "crimson", style: "factory" }
     }
   },
 
@@ -233,7 +237,8 @@ export const SKILLS = Object.freeze({
       ultOrbitSec: 0.45,
       ultLaunchSec: 0.58,
       ultSpread: 3.0,
-      ultArc: 7.5
+      ultArc: 7.5,
+      ultSword: { type: "classic", skin: "arcane", style: "energy" }
     }
   },
 });

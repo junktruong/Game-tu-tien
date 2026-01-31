@@ -10,6 +10,7 @@ export class FanSkill extends BaseSkill {
     const THREE = window.THREE;
     const col = combat.getColor(attacker);
     const meta = this.def.meta || {};
+    const swordOptions = meta.sword;
 
     const orbitSec = meta.orbitSec ?? 0.55;
     const orbitSwords = meta.orbitSwords ?? 18;
@@ -41,6 +42,7 @@ export class FanSkill extends BaseSkill {
           launchSec: Math.max(0.35, shots * cadenceSec), // gần với nhịp bắn
           spread: spread,
           arc: shotArc,
+          sword: swordOptions,
 
           onHit: ()=>{
             if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
@@ -96,7 +98,7 @@ export class FanSkill extends BaseSkill {
               combat.hitReact(attacker, defender, heavy);
               combat.applyDamage(attacker, defender, dmgEach);
               vfx.spawnBurstAt(to.clone(), col, 0.9);
-            });
+            }, swordOptions);
           });
         }
       });

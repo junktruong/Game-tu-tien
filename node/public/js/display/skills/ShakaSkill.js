@@ -9,6 +9,7 @@ export class ShakaSkill extends BaseSkill {
     const defender = (attacker === 0) ? 1 : 0;
 
     const meta = this.def.meta || {};
+    const ultSword = meta.ultSword;
 
     // ===== ULT nếu đủ =====
     if (combat.players[attacker].ult >= GAME.ultMax && combat.getCd(attacker, "ULT") <= 0){
@@ -51,6 +52,7 @@ export class ShakaSkill extends BaseSkill {
           launchSec: meta.ultLaunchSec ?? 0.78,
           spread: meta.ultSpread ?? 3.4,
           arc: meta.ultArc ?? 10.5,
+          sword: ultSword,
           onHit: ()=>{
             if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
 
@@ -90,7 +92,7 @@ export class ShakaSkill extends BaseSkill {
               if (typeof vfx.spawnShockwave === "function"){
                 vfx.spawnShockwave(end.clone().setY(0.6), col, 1.0, 16, 0.26);
               }
-            });
+            }, ultSword);
           });
         }
       });

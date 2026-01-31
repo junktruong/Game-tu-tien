@@ -7,6 +7,7 @@ import { SwordFactory } from "./entities/SwordFactory.js";
 import { VFXManager } from "./vfx/VFXManager.js";
 import { CombatSystem } from "./combat/CombatSystem.js";
 import { SkillRegistry } from "./skills/SkillRegistry.js";
+import { SKILLS } from "./config1.js";
 
 function getRoom(){
   const qs = new URLSearchParams(location.search);
@@ -51,7 +52,37 @@ socket.on("roster", (r)=>{
 });
 
 socket.on("input", (msg)=>{
-  registry.handleGesture({ combat, hud, scheduler, fighters, vfx, sceneManager }, msg.player, msg.gesture);
+  const ctx = { combat, hud, scheduler, fighters, vfx, sceneManager };
+  const g = String(msg?.gesture || "").toUpperCase();
+  const attacker = (msg.player === 1) ? 0 : 1;
+
+  if (g === "GIANT_CHARGE"){
+    if (typeof vfx.startGiantCharge === "function"){
+      vfx.startGiantCharge(
+        fighters[attacker],
+        combat.getColor(attacker),
+        attacker,
+        {
+          count: 16,
+          radius: 7.0,
+          spin: 3.2,
+          scale: 0.7,
+          sword: SKILLS.GIANT?.meta?.sword
+        }
+      );
+      hud.setBanner(`🌸 P${attacker+1}: GIANT CHARGE… (giữ 3s)`, true);
+      combat.setLastSkill(attacker, "Giant Charge");
+    }
+    return;
+  }
+  if (g === "GIANT_CANCEL"){
+    if (typeof vfx.stopGiantCharge === "function"){
+      vfx.stopGiantCharge(attacker);
+    }
+    return;
+  }
+
+  registry.handleGesture(ctx, msg.player, msg.gesture);
 });
 
 socket.on("aim", (msg)=>{

@@ -7,6 +7,7 @@ import { SwordFactory } from "./entities/SwordFactory.js";
 import { VFXManager } from "./vfx/VFXManager.js";
 import { CombatSystem } from "./combat/CombatSystem.js";
 import { SkillRegistry } from "./skills/SkillRegistry.js";
+import { SKILLS } from "./config.js";
 
 function getRoom(){
   const qs = new URLSearchParams(location.search);
@@ -59,11 +60,17 @@ socket.on("input", (msg)=>{
   if (g === "GIANT_CHARGE"){
     if (typeof vfx.startGiantCharge === "function"){
       vfx.startGiantCharge(
-  fighters[attacker],
-  combat.getColor(attacker),
-  attacker,
-  { count: 16, radius: 7.0, spin: 3.2, scale: 0.7 }
-);
+        fighters[attacker],
+        combat.getColor(attacker),
+        attacker,
+        {
+          count: 16,
+          radius: 7.0,
+          spin: 3.2,
+          scale: 0.7,
+          sword: SKILLS.GIANT?.meta?.sword
+        }
+      );
 
       hud.setBanner(`🌸 P${attacker+1}: GIANT CHARGE… (giữ 3s)`, true);
       combat.setLastSkill(attacker, "Giant Charge");
