@@ -133,6 +133,13 @@ export default function HomeClient({ data }: HomeClientProps) {
             <h1>{profile.displayName || session.user.name}</h1>
             <p className="muted">{profile.tagline || 'Chưa có mô tả'}</p>
           </div>
+          <div className="home-actions">
+            <div>
+              <h2>Chiến đấu</h2>
+              <p className="muted">Chọn phòng sẵn có hoặc tự tạo phòng mới.</p>
+            </div>
+            <Button onClick={() => router.push('/')}>Vào chiến đấu</Button>
+          </div>
           <div className="stat-grid">
             <div className="stat-card">
               <span>Nhân vật</span>
