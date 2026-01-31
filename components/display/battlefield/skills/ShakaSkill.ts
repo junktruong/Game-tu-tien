@@ -1,10 +1,10 @@
 // public/js/display/skills/ShakaSkill.js
-import { BaseSkill } from "./BaseSkill.js";
-import { GAME } from "../config.js";
-import { clamp } from "../utils.js";
+import { BaseSkill } from "./BaseSkill";
+import { GAME } from "../config";
+import { clamp } from "../utils";
 
 export class ShakaSkill extends BaseSkill {
-  cast(ctx, attacker){
+  cast(ctx: any, attacker: number){
     const { combat, hud, scheduler, fighters, vfx } = ctx;
     const defender = (attacker === 0) ? 1 : 0;
 

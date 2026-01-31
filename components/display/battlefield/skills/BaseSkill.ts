@@ -1,10 +1,12 @@
 // public/js/display/skills/BaseSkill.js
 export class BaseSkill {
-  constructor(def){
+  def: any;
+
+  constructor(def: any){
     this.def = def;
   }
 
-  cast(ctx, attackerIndex){
+  cast(ctx: any, attackerIndex: number){
     // override ở từng skill
   }
 
@@ -14,7 +16,7 @@ export class BaseSkill {
    * - spend qi + set cd
    * - playCast anim (nếu có)
    */
-  _prep(ctx, attackerIndex){
+  _prep(ctx: any, attackerIndex: number){
     const { combat, hud, fighters } = ctx;
     const def = this.def;
 

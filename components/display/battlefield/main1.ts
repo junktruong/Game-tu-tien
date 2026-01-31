@@ -1,12 +1,13 @@
+// @ts-nocheck
 // public/js/display/main.js
-import { Scheduler } from "./utils.js";
-import { HUD } from "./ui/HUD.js";
-import { SceneManager } from "./scene/SceneManager.js";
-import { StickFighter } from "./entities/StickFighter.js";
-import { SwordFactory } from "./entities/SwordFactory.js";
-import { VFXManager } from "./vfx/VFXManager.js";
-import { CombatSystem } from "./combat/CombatSystem.js";
-import { SkillRegistry } from "./skills/SkillRegistry.js";
+import { Scheduler } from "./utils";
+import { HUD } from "./ui/HUD";
+import { SceneManager } from "./scene/SceneManager";
+import { StickFighter } from "./entities/StickFighter";
+import { SwordFactory } from "./entities/SwordFactory";
+import { VFXManager } from "./vfx/VFXManager";
+import { CombatSystem } from "./combat/CombatSystem";
+import { SkillRegistry } from "./skills/SkillRegistry";
 
 function getRoom(){
   const qs = new URLSearchParams(location.search);
@@ -22,7 +23,7 @@ const ROOM = getRoom();
 const ARENA = getArena();
 
 // DOM + systems
-const stage = document.getElementById("stage");
+const stage = document.getElementById("stage") as HTMLElement;
 const hud = new HUD(ROOM);
 const scheduler = new Scheduler();
 const sceneManager = new SceneManager(stage, { arenaId: ARENA });

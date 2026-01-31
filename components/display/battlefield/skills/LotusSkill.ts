@@ -1,8 +1,8 @@
 // public/js/display/skills/LotusSkill.js
-import { BaseSkill } from "./BaseSkill.js";
+import { BaseSkill } from "./BaseSkill";
 
 export class LotusSkill extends BaseSkill {
-  cast(ctx, attacker){
+  cast(ctx: any, attacker: number){
     const { combat, hud, scheduler, fighters, vfx } = ctx;
 
     // lotus cost/cd = 0 vẫn dùng _prep được (không tốn gì)

@@ -1,8 +1,37 @@
 // public/js/display/entities/StickFighter.js
-import { clamp } from "../utils.js";
+import { clamp } from "../utils";
 
 export class StickFighter {
-  constructor(scene, { colorHex, x, facing, textureUrl }) {
+  scene: any;
+  baseX: number;
+  facing: number;
+  tilesHoriz: number;
+  tilesVert: number;
+  tileDispDuration: number;
+  actions: Record<string, number>;
+  actionFrames: Record<number, number>;
+  textureUrl: string;
+  texture: any;
+  mat: any;
+  mesh: any;
+  group: any;
+  flashOverlay: any;
+  _flashT: number;
+  _flashDur: number;
+  currentAction: number;
+  currentFrame: number;
+  lastFrameTime: number;
+  anim: {
+    mode: string;
+    t: number;
+    hitBack: number;
+    hitRecover: number;
+    hitDist: number;
+    hitDir: number;
+    castSwing: number;
+  };
+
+  constructor(scene: any, { colorHex, x, facing, textureUrl }: { colorHex: number; x: number; facing: number; textureUrl?: string }) {
     const THREE = window.THREE;
 
     this.scene = scene;
@@ -129,7 +158,7 @@ export class StickFighter {
     this.updateTextureOffset();
   }
 
-  createTexture(url) {
+  createTexture(url: string) {
     const THREE = window.THREE;
     const loader = new THREE.TextureLoader();
     const texture = loader.load(
@@ -160,7 +189,7 @@ export class StickFighter {
     return texture;
   }
 
-  setTexture(url) {
+  setTexture(url: string) {
     if (!url || url === this.textureUrl) {
       return;
     }
@@ -175,7 +204,7 @@ export class StickFighter {
   }
 
   // ===== Flash overlay (không tint texture) =====
-  setHitFlash(ms) {
+  setHitFlash(ms: number) {
     this._flashDur = Math.max(0.06, ms / 1000);
     this._flashT = 0;
     if (this.flashOverlay?.material) {
@@ -183,7 +212,7 @@ export class StickFighter {
     }
   }
 
-  playCast(cfg) {
+  playCast(cfg: { isSkill?: boolean } | null) {
     this.anim.mode = "cast";
     this.anim.t = 0;
 
@@ -205,7 +234,7 @@ export class StickFighter {
 
   }
 
-  changeAction(newAction) {
+  changeAction(newAction: number) {
     if (this.currentAction !== newAction) {
       this.currentAction = newAction;
       this.currentFrame = 0;
@@ -227,7 +256,7 @@ export class StickFighter {
     return p;
   }
 
-  update(dt, elapsedTime) {
+  update(dt: number, elapsedTime: number) {
     const now = performance.now();
     const a = this.anim;
     a.t += dt;

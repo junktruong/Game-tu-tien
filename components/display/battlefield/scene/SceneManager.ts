@@ -1,8 +1,17 @@
 // public/js/display/scene/SceneManager.js
-import { getArenaConfig } from "./arenaConfig.js";
+import { getArenaConfig } from "./arenaConfig";
 
 export class SceneManager {
-  constructor(stageEl, { arenaId } = {}){
+  stageEl: HTMLElement;
+  scene: any;
+  camera: any;
+  renderer: any;
+  stars: any;
+  composer: any;
+  useComposer: boolean;
+  camShake: number;
+
+  constructor(stageEl: HTMLElement, { arenaId }: { arenaId?: string } = {}){
     const THREE = window.THREE;
     const arena = getArenaConfig(arenaId);
 
@@ -86,7 +95,7 @@ export class SceneManager {
     this.camShake = 0;
   }
 
-  _createStars(){
+  _createStars() {
     const THREE = window.THREE;
     const starCount = 1200;
     const geo = new THREE.BufferGeometry();
@@ -104,25 +113,25 @@ export class SceneManager {
     return pts;
   }
 
-  _setupComposerSafe(){
-    try{
+  _setupComposerSafe() {
+    try {
       const THREE = window.THREE;
       this.composer = new THREE.EffectComposer(this.renderer);
       this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
       const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.15, 0.85, 0.22);
       this.composer.addPass(bloom);
       this.useComposer = true;
-    }catch(_){
+    } catch (_) {
       this.useComposer = false;
       this.composer = null;
     }
   }
 
-  shake(amount){
+  shake(amount: number) {
     this.camShake = Math.max(this.camShake, amount);
   }
 
-  update(dt){
+  update(dt: number) {
     if (this.stars){
       this.stars.rotation.y += this.stars.userData.rot * dt * 0.06;
       this.stars.rotation.x += this.stars.userData.rot * dt * 0.02;
@@ -136,14 +145,14 @@ export class SceneManager {
     this.camera.lookAt(0, 10, 0);
   }
 
-  render(){
+  render() {
     if (this.useComposer && this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
     // this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     // this.renderer.toneMapping = THREE.NoToneMapping;
   }
 
-  resize(){
+  resize() {
     this.camera.aspect = innerWidth/innerHeight;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(innerWidth, innerHeight);

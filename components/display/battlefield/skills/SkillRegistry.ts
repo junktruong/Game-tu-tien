@@ -1,19 +1,22 @@
 // public/js/display/skills/SkillRegistry.js
-import { SKILLS } from "../config.js";
+import { SKILLS } from "../config";
 
-import { BasicAttackSkill } from "./BasicAttackSkill.js";
-import { SpinSkill } from "./SpinSkill.js";
-import { GiantSkill } from "./GiantSkill.js";
-import { FanSkill } from "./FanSkill.js";
-import { LotusSkill } from "./LotusSkill.js";
+import { BasicAttackSkill } from "./BasicAttackSkill";
+import { SpinSkill } from "./SpinSkill";
+import { GiantSkill } from "./GiantSkill";
+import { FanSkill } from "./FanSkill";
+import { LotusSkill } from "./LotusSkill";
 
-import { WallSkill } from "./WallSkill.js";
-import { SphereSkill } from "./SphereSkill.js";
-import { ShakaSkill } from "./ShakaSkill.js";
+import { WallSkill } from "./WallSkill";
+import { SphereSkill } from "./SphereSkill";
+import { ShakaSkill } from "./ShakaSkill";
 
-import { AimSkill } from "./AimSkill.js";
+import { AimSkill } from "./AimSkill";
 
 export class SkillRegistry {
+  byGesture: Map<string, any>;
+  skills: any[];
+
   constructor(){
     this.byGesture = new Map();
 
@@ -36,7 +39,7 @@ export class SkillRegistry {
     }
   }
 
-  handleGesture(ctx, playerNum, gesture){
+  handleGesture(ctx: any, playerNum: number, gesture: string){
     const attacker = (playerNum === 1) ? 0 : 1;
     const key = String(gesture || "").toUpperCase();
     const skill = this.byGesture.get(key);

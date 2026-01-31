@@ -1,8 +1,24 @@
 // public/js/display/combat/CombatSystem.js
-import { clamp } from "../utils.js";
-import { GAME } from "../config.js";
+import { clamp } from "../utils";
+import { GAME } from "../config";
 
-function makePlayer(){
+type PlayerState = {
+  hp: number;
+  qi: number;
+  ult: number;
+  cd: Record<string, number>;
+  effect: {
+    wallUntil: number;
+    sphereUntil: number;
+    parryUntil: number;
+    lotusUntil: number;
+  };
+  combo: { count: number; lastAt: number };
+  lastSkill: string;
+  statusTag: string;
+};
+
+const makePlayer = (): PlayerState => {
   return {
     hp: GAME.hpMax,
     qi: GAME.qiMax,
@@ -20,10 +36,18 @@ function makePlayer(){
     lastSkill: "—",
     statusTag: "—"
   };
-}
+};
 
 export class CombatSystem {
-  constructor({ hud, scheduler, fighters, vfx, sceneManager }){
+  hud: any;
+  scheduler: any;
+  fighters: any[];
+  vfx: any;
+  sceneManager: any;
+  players: PlayerState[];
+  hitstop: number;
+
+  constructor({ hud, scheduler, fighters, vfx, sceneManager }: { hud: any; scheduler: any; fighters: any[]; vfx: any; sceneManager: any }){
     this.hud = hud;
     this.scheduler = scheduler;
     this.fighters = fighters;
@@ -34,20 +58,20 @@ export class CombatSystem {
     this.hitstop = 0;
   }
 
-  isAlive(i){ return this.players[i].hp > 0; }
+  isAlive(i: number) { return this.players[i].hp > 0; }
 
-  setCd(i, skillId, sec){ this.players[i].cd[skillId] = Math.max(0, sec || 0); }
-  getCd(i, skillId){ return this.players[i].cd[skillId] || 0; }
+  setCd(i: number, skillId: string, sec: number){ this.players[i].cd[skillId] = Math.max(0, sec || 0); }
+  getCd(i: number, skillId: string){ return this.players[i].cd[skillId] || 0; }
 
-  addUlt(i, amt){
+  addUlt(i: number, amt: number){
     this.players[i].ult = clamp(this.players[i].ult + amt, 0, GAME.ultMax);
   }
 
-  spendQi(i, cost){
+  spendQi(i: number, cost: number){
     this.players[i].qi = clamp(this.players[i].qi - (cost||0), 0, GAME.qiMax);
   }
 
-  canCast(i, { id, cost=0 }){
+  canCast(i: number, { id, cost=0 }: { id: string; cost?: number }){
     if (!this.isAlive(0) || !this.isAlive(1)) return false;
     if (this.getCd(i, id) > 0) return false;
     if (this.players[i].qi < cost) return false;
@@ -55,7 +79,7 @@ export class CombatSystem {
   }
 
   // giảm dmg theo phòng ngự
-  _damageAfterDefense(attacker, defender, rawDmg){
+  _damageAfterDefense(attacker: number, defender: number, rawDmg: number){
     const now = performance.now();
     let dmg = rawDmg;
 
@@ -79,7 +103,7 @@ export class CombatSystem {
     return dmg;
   }
 
-  applyDamage(attacker, defender, rawDmg){
+  applyDamage(attacker: number, defender: number, rawDmg: number){
     const dmg = this._damageAfterDefense(attacker, defender, rawDmg);
 
     this.players[defender].hp = clamp(this.players[defender].hp - dmg, 0, GAME.hpMax);
@@ -92,7 +116,7 @@ export class CombatSystem {
     }
   }
 
-  hitReact(attacker, defender, heavy){
+  hitReact(attacker: number, defender: number, heavy: boolean){
     const col = this.getColor(attacker);
     this.fighters[defender].setHitFlash(heavy ? 260 : 170);
     this.fighters[defender].playHit(heavy);
@@ -107,9 +131,9 @@ export class CombatSystem {
     this.hitstop = Math.max(this.hitstop, heavy ? GAME.hitstopHeavy : GAME.hitstopLight);
   }
 
-  getColor(i){ return i===0 ? 0x00ffff : 0xff4fd8; }
+  getColor(i: number){ return i===0 ? 0x00ffff : 0xff4fd8; }
 
-  getHitPoint(defender){
+  getHitPoint(defender: number){
     const now = performance.now();
     const host = this.fighters[defender];
 
@@ -126,11 +150,11 @@ export class CombatSystem {
     return host.getCorePos(9.2);
   }
 
-  setLastSkill(i, text){ this.players[i].lastSkill = text; }
-  setStatusTag(i, text){ this.players[i].statusTag = text; }
+  setLastSkill(i: number, text: string){ this.players[i].lastSkill = text; }
+  setStatusTag(i: number, text: string){ this.players[i].statusTag = text; }
 
   // tick
-  update(dt){
+  update(dt: number){
     const now = performance.now();
 
     for(let i=0;i<2;i++){
