@@ -17,6 +17,7 @@ export type SkinProfile = {
   name: string;
   tone: string;
   effect: string;
+  textureUrl: string;
 };
 
 export type ArenaProfile = {
@@ -41,4 +42,12 @@ export type GameData = {
   skins: SkinProfile[];
   arenas: ArenaProfile[];
   rooms: RoomProfile[];
+};
+
+export type PlayerProfile = {
+  displayName: string;
+  tagline: string;
+  characterId: string;
+  skinId: string;
+  arenaId: string;
 };

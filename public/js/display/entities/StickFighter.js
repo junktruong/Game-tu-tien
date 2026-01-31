@@ -37,35 +37,9 @@ export class StickFighter {
     };
 
     // Load Texture
-    const loader = new THREE.TextureLoader();
     const url = textureUrl || "/img/stick_fighter_sheet.png";
-
-    this.texture = loader.load(
-      url,
-      () => {},
-      undefined,
-      (err) => console.error("Lỗi load ảnh:", err)
-    );
-
-    // ===== FIX MÀU: đảm bảo texture dùng sRGB =====
-    // Three r152+:
-    if ("colorSpace" in this.texture) {
-      this.texture.colorSpace = THREE.SRGBColorSpace;
-    } else if ("encoding" in this.texture) {
-      // Three cũ:
-      this.texture.encoding = THREE.sRGBEncoding;
-    }
-    this.texture.needsUpdate = true;
-
-    // Wrap + repeat đúng sprite sheet
-    this.texture.wrapS = THREE.RepeatWrapping;
-    this.texture.wrapT = THREE.RepeatWrapping;
-    this.texture.repeat.set(1 / this.tilesHoriz, 1 / this.tilesVert);
-    this.texture.offset.set(0, 1 - (1 / this.tilesVert));
-
-    // Filter: sprite bạn là vẽ smooth -> Linear đẹp hơn Nearest (Nearest dễ “răng cưa/đổi màu” ở biên)
-    this.texture.magFilter = THREE.LinearFilter;
-    this.texture.minFilter = THREE.LinearMipMapLinearFilter;
+    this.textureUrl = url;
+    this.texture = this.createTexture(url);
 
     // ===== Material CHÍNH: luôn trắng để KHÔNG bị tint (đè màu) =====
     this.mat = new THREE.MeshBasicMaterial({
@@ -122,9 +96,12 @@ export class StickFighter {
       depthWrite: false,
       side: THREE.DoubleSide
     });
-    // this.flashOverlay = new THREE.Mesh(new THREE.PlaneGeometry(planeWidth, planeHeight), flashMat);
-    // this.flashOverlay.position.set(0, 0, 0.01); // nhích lên tránh z-fight
-    // if (this.facing === -1) this.flashOverlay.scale.x = -1;
+    this.flashOverlay = new THREE.Mesh(
+      new THREE.PlaneGeometry(planeWidth, planeHeight),
+      flashMat
+    );
+    this.flashOverlay.position.set(0, 0, 0.01); // nhích lên tránh z-fight
+    if (this.facing === -1) this.flashOverlay.scale.x = -1;
     this.group.add(this.flashOverlay);
 
     // flash state
@@ -149,6 +126,51 @@ export class StickFighter {
     };
 
     // set frame initial
+    this.updateTextureOffset();
+  }
+
+  createTexture(url) {
+    const THREE = window.THREE;
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load(
+      url,
+      () => {},
+      undefined,
+      (err) => console.error("Lỗi load ảnh:", err)
+    );
+
+    // ===== FIX MÀU: đảm bảo texture dùng sRGB =====
+    if ("colorSpace" in texture) {
+      texture.colorSpace = THREE.SRGBColorSpace;
+    } else if ("encoding" in texture) {
+      texture.encoding = THREE.sRGBEncoding;
+    }
+    texture.needsUpdate = true;
+
+    // Wrap + repeat đúng sprite sheet
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1 / this.tilesHoriz, 1 / this.tilesVert);
+    texture.offset.set(0, 1 - (1 / this.tilesVert));
+
+    // Filter: sprite bạn là vẽ smooth -> Linear đẹp hơn Nearest
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+    return texture;
+  }
+
+  setTexture(url) {
+    if (!url || url === this.textureUrl) {
+      return;
+    }
+    this.textureUrl = url;
+    const newTexture = this.createTexture(url);
+    if (this.mat) {
+      this.mat.map = newTexture;
+      this.mat.needsUpdate = true;
+    }
+    this.texture = newTexture;
     this.updateTextureOffset();
   }
 
