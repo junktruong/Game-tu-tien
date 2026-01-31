@@ -142,7 +142,11 @@ export default function Display() {
         src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"
         strategy="beforeInteractive"
       />
-      <Script src="/socket.io/socket.io.js" strategy="beforeInteractive" />
+      <Script
+        src="https://cdn.socket.io/4.7.4/socket.io.min.js"
+        strategy="beforeInteractive"
+        crossOrigin="anonymous"
+      />
       <Script type="module" src="/js/display/main.js" strategy="afterInteractive" />
 
     </>

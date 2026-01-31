@@ -66,7 +66,10 @@ export default function RoomPanel({ rooms, arenas, onCreateRoom }: RoomPanelProp
                   <ProgressBar value={room.occupancy} max={room.capacity} />
                 </div>
                 <div className="room-actions">
-                  <a href={`/display?room=${room.id}`} className="link">
+                  <a
+                    href={`/display?room=${room.id}&arena=${encodeURIComponent(room.arenaId)}`}
+                    className="link"
+                  >
                     Display
                   </a>
                   <a href={`/control?room=${room.id}&player=1`} className="link">
