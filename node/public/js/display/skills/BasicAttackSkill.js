@@ -19,6 +19,7 @@ export class BasicAttackSkill extends BaseSkill {
 
     const col = combat.getColor(attacker);
     const meta = this.def.meta;
+    const swordOptions = meta?.sword;
 
     scheduler.schedule(this.def.anim?.charge ?? 0, ()=>{
       const THREE = window.THREE;
@@ -38,7 +39,7 @@ export class BasicAttackSkill extends BaseSkill {
           if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
           combat.hitReact(attacker, defender, false);
           combat.applyDamage(attacker, defender, meta.combo1Dmg);
-        });
+        }, swordOptions);
         return;
       }
 
@@ -61,7 +62,7 @@ export class BasicAttackSkill extends BaseSkill {
               if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
               combat.hitReact(attacker, defender, false);
               combat.applyDamage(attacker, defender, meta.combo2DmgEach);
-            });
+            }, swordOptions);
           });
         }
         return;
@@ -90,7 +91,7 @@ export class BasicAttackSkill extends BaseSkill {
             const heavy = (k === Math.floor(count/2));
             combat.hitReact(attacker, defender, heavy);
             combat.applyDamage(attacker, defender, dmgEach);
-          });
+          }, swordOptions);
         });
       }
 

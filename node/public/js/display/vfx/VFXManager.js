@@ -47,6 +47,128 @@ export class VFXManager {
     };
   }
 
+  _resolveSwordOptions(options = {}){
+    const normalized = options ?? {};
+    const resolved = this.swordFactory?.resolveSwordOptions?.(normalized) ?? {
+      type: normalized.type,
+      skin: normalized.skin,
+    };
+    return {
+      style: normalized.style ?? "factory",
+      type: resolved.type,
+      skin: resolved.skin,
+    };
+  }
+
+  _getTypeSpec(type){
+    return this.swordFactory?.getTypeSpec?.(type);
+  }
+
+  _getSkinSpec(skin){
+    return this.swordFactory?.getSkinSpec?.(skin);
+  }
+
+  _createEnergyProjectile(colorHex, options = {}){
+    const THREE = window.THREE;
+    const resolved = this._resolveSwordOptions(options);
+    const typeSpec = this._getTypeSpec(resolved.type);
+    const skinSpec = this._getSkinSpec(resolved.skin);
+
+    const grp = new THREE.Group();
+    const height = (typeSpec?.blade?.h ?? 6.2) + (typeSpec?.tip?.h ?? 0.7);
+    const bladeW = typeSpec?.blade?.w ?? 0.34;
+
+    const core = new THREE.Mesh(
+      new THREE.CylinderGeometry(Math.max(0.05, bladeW * 0.18), Math.max(0.08, bladeW * 0.36), height, 6),
+      new THREE.MeshStandardMaterial({
+        color: skinSpec?.baseColor ?? 0xffffff,
+        emissive: colorHex,
+        emissiveIntensity: skinSpec?.emissiveIntensity ?? 1.0,
+        transparent:true,
+        opacity: skinSpec?.opacity ?? 0.9,
+        roughness: skinSpec?.roughness ?? 0.18,
+        metalness: skinSpec?.metalness ?? 0.3
+      })
+    );
+    core.position.y = height * 0.5;
+
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: this.glowTex,
+      color: colorHex,
+      transparent:true,
+      opacity: skinSpec?.glowOpacity ?? 0.65,
+      depthWrite:false,
+      blending: THREE.AdditiveBlending
+    }));
+    const glowW = typeSpec?.glow?.w ?? 4.2;
+    const glowH = typeSpec?.glow?.h ?? 8.6;
+    glow.position.y = height * 0.5;
+    glow.scale.set(glowW, glowH, 1);
+
+    const trail = new THREE.Mesh(
+      new THREE.PlaneGeometry(typeSpec?.trail?.w ?? 2.6, typeSpec?.trail?.h ?? 12.0),
+      new THREE.MeshBasicMaterial({
+        map: this.glowTex,
+        color: colorHex,
+        transparent:true,
+        opacity: skinSpec?.trailOpacity ?? 0.22,
+        blending: THREE.AdditiveBlending,
+        depthWrite:false,
+        side: THREE.DoubleSide
+      })
+    );
+    trail.position.y = height * 0.25;
+    trail.rotation.y = Math.PI / 2;
+
+    grp.add(trail, glow, core);
+    grp.userData = { glow, trail, sword: { ...resolved } };
+    return grp;
+  }
+
+  _createProjectileMesh(colorHex, options = {}){
+    const resolved = this._resolveSwordOptions(options);
+    if (resolved.style === "energy"){
+      return this._createEnergyProjectile(colorHex, resolved);
+    }
+    return this.swordFactory.createSwordProjectile(colorHex, resolved);
+  }
+
+  _createEnergyInstancedMesh(colorHex, count, options = {}){
+    const THREE = window.THREE;
+    const resolved = this._resolveSwordOptions(options);
+    const typeSpec = this._getTypeSpec(resolved.type);
+    const skinSpec = this._getSkinSpec(resolved.skin);
+
+    const height = (typeSpec?.blade?.h ?? 6.2) + (typeSpec?.tip?.h ?? 0.7);
+    const bladeW = typeSpec?.blade?.w ?? 0.34;
+    const radiusTop = Math.max(0.05, bladeW * 0.18);
+    const radiusBottom = Math.max(0.08, bladeW * 0.38);
+
+    const geo = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 7);
+    const mat = new THREE.MeshStandardMaterial({
+      color: skinSpec?.baseColor ?? 0xffffff,
+      emissive: colorHex,
+      emissiveIntensity: skinSpec?.emissiveIntensity ?? 1.0,
+      transparent:true,
+      opacity: skinSpec?.opacity ?? 0.9,
+      roughness: skinSpec?.roughness ?? 0.18,
+      metalness: skinSpec?.metalness ?? 0.3
+    });
+
+    const mesh = new THREE.InstancedMesh(geo, mat, count);
+    mesh.frustumCulled = false;
+    mesh.userData.sword = { ...resolved };
+    return mesh;
+  }
+
+  _createInstancedSwordMesh(colorHex, count, options = {}){
+    const resolved = this._resolveSwordOptions(options);
+    if (resolved.style === "factory" && this.swordFactory?.createSwordInstancedMesh){
+      return this.swordFactory.createSwordInstancedMesh(colorHex, count, resolved);
+    }
+    return this._createEnergyInstancedMesh(colorHex, count, resolved);
+  }
+
   // ===== visuals helpers =====
   spawnSlash(pos, colorHex, yRot=0){
     const THREE = window.THREE;
@@ -184,7 +306,7 @@ export class VFXManager {
   }
 
   // ===== delayed spawn wrapper (không dùng setTimeout cho từng kiếm) =====
-  _spawnDelayedProjectileToTarget(from, to, colorHex, speed, wobble, arc, delaySec, onHit){
+  _spawnDelayedProjectileToTarget(from, to, colorHex, speed, wobble, arc, delaySec, onHit, swordOptions){
     this.projectiles.push({
       __delayed: true,
       __delay: delaySec,
@@ -194,7 +316,8 @@ export class VFXManager {
       __speed: speed,
       __wobble: wobble,
       __arc: arc,
-      __onHit: onHit
+      __onHit: onHit,
+      __sword: swordOptions
     });
   }
 
@@ -212,7 +335,7 @@ export class VFXManager {
   spawnProjectileBezier(from, to, colorHex, speed, opts = {}){
     const THREE = window.THREE;
 
-    const p = this.swordFactory.createSwordProjectile(colorHex);
+    const p = this._createProjectileMesh(colorHex, opts.sword);
     p.position.copy(from);
     this.scene.add(p);
 
@@ -251,9 +374,9 @@ export class VFXManager {
   }
 
   // ===== base projectile (thẳng / arc) =====
-  spawnProjectileToTarget(from, to, colorHex, speed, wobble=0, arc=0, onHit=null){
+  spawnProjectileToTarget(from, to, colorHex, speed, wobble=0, arc=0, onHit=null, swordOptions = {}){
     const THREE = window.THREE;
-    const p = this.swordFactory.createSwordProjectile(colorHex);
+    const p = this._createProjectileMesh(colorHex, swordOptions);
     p.position.copy(from);
     this.scene.add(p);
 
@@ -303,7 +426,8 @@ export class VFXManager {
       spin: opts.spin ?? 2.6,
       countPerRing: opts.countPerRing ?? 12,
 
-      rings: []
+      rings: [],
+      swordOptions: opts.sword ?? null
     };
 
     this.giantCharges.set(ownerIndex, st);
@@ -355,7 +479,7 @@ export class VFXManager {
     const count = st.countPerRing;
 
     for (let i=0; i<count; i++){
-      const s = this.swordFactory.createSwordProjectile(st.colorHex);
+      const s = this._createProjectileMesh(st.colorHex, st.swordOptions);
 
       // nhẹ + gọn
     s.scale.setScalar(0.70);
@@ -432,7 +556,7 @@ export class VFXManager {
       const to = getTargetPos().clone();
       const delay = i * cadenceSec;
 
-      this._spawnDelayedProjectileToTarget(from, to, st.colorHex, speed, 0, arc, delay, onHit);
+      this._spawnDelayedProjectileToTarget(from, to, st.colorHex, speed, 0, arc, delay, onHit, st.swordOptions);
 
       // rút kiếm khỏi vòng ngay
       s.visible = false;
@@ -615,23 +739,16 @@ export class VFXManager {
     launchSec = 0.70,
     spread = 3.2,
     arc = 10.0,
-    onHit = null
+    onHit = null,
+    sword = null
   }){
     const THREE = window.THREE;
 
-    const geo = new THREE.CylinderGeometry(0.10, 0.22, 6.2, 7);
-    const mat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: colorHex,
-      emissiveIntensity: 1.45,
-      transparent:true,
-      opacity: 0.86,
-      roughness: 0.1,
-      metalness: 0.2
-    });
-
-    const mesh = new THREE.InstancedMesh(geo, mat, visualSwords);
-    mesh.frustumCulled = false;
+    const mesh = this._createInstancedSwordMesh(
+      colorHex,
+      visualSwords,
+      sword ?? { style: "energy" }
+    );
     this.scene.add(mesh);
 
     const hitIndices = new Set();
@@ -680,6 +797,50 @@ export class VFXManager {
     });
   }
 
+  playVortexSwords({
+    startPos,
+    endPos,
+    colorHex,
+    durationSec = 0.85,
+    count = 36,
+    radius = 5.6,
+    spinSpeed = 10.5,
+    arc = 1.0,
+    wobble = 0.9,
+    sword = null
+  }){
+    const THREE = window.THREE;
+    const mesh = this._createInstancedSwordMesh(
+      colorHex,
+      count,
+      sword ?? { style: "energy" }
+    );
+    this.scene.add(mesh);
+
+    const swords = [];
+    for (let i = 0; i < count; i++){
+      swords.push({
+        a0: (i / count) * Math.PI * 2,
+        rMul: 0.75 + Math.random() * 0.5,
+        h: (Math.random() - 0.5) * 2.4,
+        roll: Math.random() * Math.PI * 2,
+        wobble: (0.5 + Math.random() * 0.5) * wobble,
+      });
+    }
+
+    this.vortexes.push({
+      mesh,
+      swords,
+      startPos: startPos.clone(),
+      endPos: endPos.clone(),
+      durationSec,
+      radius,
+      spinSpeed,
+      arc,
+      t: 0
+    });
+  }
+
   update(dt, elapsedTime, fighters){
     const THREE = window.THREE;
     const t = elapsedTime;
@@ -696,7 +857,8 @@ export class VFXManager {
             pr.__start, pr.__target,
             pr.__color, pr.__speed,
             pr.__wobble ?? 0, pr.__arc ?? 0,
-            pr.__onHit ?? null
+            pr.__onHit ?? null,
+            pr.__sword ?? null
           );
           this.projectiles.splice(i, 1);
         }
@@ -865,6 +1027,42 @@ export class VFXManager {
       if (p >= 1){
         this.scene.remove(m);
         this.magicCircles.splice(i,1);
+      }
+    }
+
+    // ===== vortex swarms (SPIN) =====
+    for (let vi = this.vortexes.length - 1; vi >= 0; vi--){
+      const v = this.vortexes[vi];
+      v.t += dt;
+
+      const p = clamp(v.t / v.durationSec, 0, 1);
+      const center = this._tmp.v3c.lerpVectors(v.startPos, v.endPos, p);
+      const centerY = center.y + Math.sin(p * Math.PI) * v.arc;
+      const rot = v.t * v.spinSpeed;
+      const dummy = this._tmp.o3d;
+
+      for (let i = 0; i < v.swords.length; i++){
+        const s = v.swords[i];
+        const ang = s.a0 + rot;
+        const r = v.radius * s.rMul;
+
+        const x = center.x + Math.cos(ang) * r;
+        const z = center.z + Math.sin(ang) * (r * 0.75);
+        const y = centerY + s.h + Math.sin((v.t * 4.0) + s.a0) * 0.35;
+
+        dummy.position.set(x, y, z);
+        const dir = this._tmp.v3a.set(-Math.sin(ang), 0.25, Math.cos(ang)).normalize();
+        dummy.quaternion.setFromUnitVectors(this._tmp.yAxis, dir);
+        dummy.rotateY(s.roll + v.t * 2.8);
+        dummy.updateMatrix();
+        v.mesh.setMatrixAt(i, dummy.matrix);
+      }
+
+      v.mesh.instanceMatrix.needsUpdate = true;
+
+      if (p >= 1){
+        this.scene.remove(v.mesh);
+        this.vortexes.splice(vi, 1);
       }
     }
 

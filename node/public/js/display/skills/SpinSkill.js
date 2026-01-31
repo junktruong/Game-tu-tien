@@ -10,6 +10,7 @@ export class SpinSkill extends BaseSkill {
     const THREE = window.THREE;
     const col = combat.getColor(attacker);
     const meta = this.def.meta || {};
+    const swordOptions = meta.sword;
 
     const durationSec = meta.durationSec ?? 0.85;
     const ticks = meta.ticks ?? 4;
@@ -50,7 +51,8 @@ export class SpinSkill extends BaseSkill {
           radius,
           spinSpeed: (attacker===0 ? 1 : -1) * spinSpeed,
           arc,
-          wobble
+          wobble,
+          sword: swordOptions
         });
       }
 
