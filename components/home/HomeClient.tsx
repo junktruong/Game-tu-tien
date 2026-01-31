@@ -190,6 +190,7 @@ export default function HomeClient({ data }: HomeClientProps) {
     return () => {
       destroyed = true;
       if (cleanup) cleanup();
+      didInitRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]); // init sau khi profile đã sẵn sàng

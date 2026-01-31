@@ -165,7 +165,9 @@ export class StickFighter {
     const loader = new THREE.TextureLoader();
     const texture = loader.load(
       url,
-      () => {},
+      () => {
+        texture.needsUpdate = true;
+      },
       undefined,
       (err) => console.error("Lỗi load ảnh:", err)
     );
@@ -176,7 +178,6 @@ export class StickFighter {
     } else if ("encoding" in texture) {
       texture.encoding = THREE.sRGBEncoding;
     }
-    texture.needsUpdate = true;
 
     // Wrap + repeat đúng sprite sheet
     texture.wrapS = THREE.RepeatWrapping;
