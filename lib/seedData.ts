@@ -32,18 +32,21 @@ export const seedData: GameData = {
       name: 'Ngọc Bích',
       tone: '#00fff0',
       effect: 'Vệt kiếm xanh lam + hạt sáng',
+      textureUrl: '/img/stick_fighter_sheet.png',
     },
     {
       id: 'crimson-moon',
       name: 'Huyết Nguyệt',
       tone: '#ff4fd8',
       effect: 'Tàn ảnh tím hồng + tia sét',
+      textureUrl: '/img/stick_fighter_sheet123.png',
     },
     {
       id: 'ember-gold',
       name: 'Hỏa Kim',
       tone: '#ffb347',
       effect: 'Bụi lửa + đốm tro',
+      textureUrl: '/img/stick_fighter_sheet_chuan.png',
     },
   ],
   arenas: [
