@@ -307,16 +307,7 @@ export class StickFighter {
       this.currentFrame++;
 
       if (this.currentFrame >= maxFrames) {
-        // one-shot: giữ frame cuối
-        if (
-          this.currentAction === this.actions.ATTACK ||
-          this.currentAction === this.actions.SKILL ||
-          this.currentAction === this.actions.HEAVY_ATTACK
-        ) {
-          this.currentFrame = maxFrames - 1;
-        } else {
-          this.currentFrame = 0;
-        }
+        this.currentFrame = 0;
       }
 
       this.updateTextureOffset();
