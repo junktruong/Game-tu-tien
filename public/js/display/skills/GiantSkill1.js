@@ -82,7 +82,8 @@ export class GiantSkill extends BaseSkill {
               const heavy = (Math.random() < 0.22);
               combat.hitReact(attacker, defender, heavy);
               combat.applyDamage(attacker, defender, dmgEach);
-            } : null
+            } : null,
+            { attackerIndex: attacker }
           );
         });
       }

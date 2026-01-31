@@ -45,6 +45,7 @@ export class ShakaSkill extends BaseSkill {
           fromFighter: atk,
           getTargetPos: () => combat.getHitPoint(defender),
           colorHex: col,
+          attackerIndex: attacker,
           visualSwords: meta.ultVisualSwords ?? 84,
           hits,
           orbitSec: meta.ultOrbitSec ?? 0.58,
@@ -90,7 +91,7 @@ export class ShakaSkill extends BaseSkill {
               if (typeof vfx.spawnShockwave === "function"){
                 vfx.spawnShockwave(end.clone().setY(0.6), col, 1.0, 16, 0.26);
               }
-            });
+            }, { attackerIndex: attacker });
           });
         }
       });

@@ -14,6 +14,11 @@ export class GiantSkill extends BaseSkill {
     // NEW: GIANT chuyển sang "2 bông hoa kiếm" (charge ở control, cast ở display)
     const shots = 2;
     const dmgEach = meta.dmgEach ?? 7;
+    const fallbackSpeed = meta.fallbackSpeed ?? 120;
+    const fallbackArc = meta.fallbackArc ?? 7.2;
+    const fallbackSideScale = meta.fallbackSideScale ?? 2.6;
+    const fallbackSwirlAmp = meta.fallbackSwirlAmp ?? 0.7;
+    const fallbackSwirlFreq = meta.fallbackSwirlFreq ?? 10.5;
 
     combat.setLastSkill(attacker, "Liên Hoa Kiếm · Song Ấn");
     hud.setBanner(`🌸 P${attacker+1}: LIÊN HOA KIẾM · SONG ẤN`);
@@ -48,14 +53,20 @@ if (typeof vfx.fireGiantFromStackedRings === "function"){
       const from = fighters[attacker].getMuzzlePos();
       for (let i=0;i<shots;i++){
         const to = combat.getHitPoint(defender).clone().add(new THREE.Vector3((i===0?-1:1)*0.5, 0.2, 0));
-       vfx.spawnProjectileBezier(from, to, st.colorHex, speed, {
-  arc: 7.2,
-  side: (i % 2 === 0 ? -1 : 1),   // xen kẽ trái phải
-  sideScale: 2.6,
-  swirlAmp: 0.7,
-  swirlFreq: 10.5,
-  onHit
-});
+        vfx.spawnProjectileBezier(from, to, col, fallbackSpeed, {
+          arc: fallbackArc,
+          side: (i % 2 === 0 ? -1 : 1),   // xen kẽ trái phải
+          sideScale: fallbackSideScale,
+          swirlAmp: fallbackSwirlAmp,
+          swirlFreq: fallbackSwirlFreq,
+          attackerIndex: attacker,
+          onHit: ()=>{
+            if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
+            const heavy = (Math.random() < 0.12);
+            combat.hitReact(attacker, defender, heavy);
+            combat.applyDamage(attacker, defender, dmgEach);
+          },
+        });
       }
     });
   }

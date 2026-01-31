@@ -2,7 +2,7 @@
 import { clamp } from "../utils.js";
 
 export class StickFighter {
-  constructor(scene, { colorHex, x, facing, textureUrl }) {
+  constructor(scene, { colorHex, x, facing, textureUrl, skinKey }) {
     const THREE = window.THREE;
 
     this.scene = scene;
@@ -39,6 +39,7 @@ export class StickFighter {
     // Load Texture
     const loader = new THREE.TextureLoader();
     const url = textureUrl || "/img/stick_fighter_sheet.png";
+    this.skinKey = skinKey || "default";
 
     this.texture = loader.load(
       url,
