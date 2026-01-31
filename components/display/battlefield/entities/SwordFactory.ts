@@ -1,13 +1,15 @@
 // public/js/display/entities/SwordFactory.js
 export class SwordFactory {
-  constructor(glowTex){
+  glowTex: any;
+
+  constructor(glowTex: any){
     this.glowTex = glowTex;
   }
 
   createGlowTexture(){
     const c = document.createElement("canvas");
     c.width = c.height = 64;
-    const g = c.getContext("2d");
+    const g = c.getContext("2d") as CanvasRenderingContext2D;
     const grad = g.createRadialGradient(32,32,0, 32,32,32);
     grad.addColorStop(0.0,'rgba(255,255,255,1)');
     grad.addColorStop(0.18,'rgba(255,255,255,.7)');
@@ -27,7 +29,7 @@ export class SwordFactory {
    * - glow sprite
    * - trail plane (vệt sáng kéo dài) => đẹp hơn rất nhiều
    */
-  createSwordProjectile(colorHex){
+  createSwordProjectile(colorHex: number){
     const THREE = window.THREE;
 
     const grp = new THREE.Group();

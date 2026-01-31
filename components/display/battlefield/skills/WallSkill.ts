@@ -1,8 +1,8 @@
 // public/js/display/skills/WallSkill.js
-import { BaseSkill } from "./BaseSkill.js";
+import { BaseSkill } from "./BaseSkill";
 
 export class WallSkill extends BaseSkill {
-  cast(ctx, attacker){
+  cast(ctx: any, attacker: number){
     const { combat, hud, scheduler, fighters, vfx } = ctx;
     if (!this._prep(ctx, attacker)) return;
 

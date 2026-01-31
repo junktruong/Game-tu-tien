@@ -1,8 +1,8 @@
 // public/js/display/skills/GiantSkill.js
-import { BaseSkill } from "./BaseSkill.js";
+import { BaseSkill } from "./BaseSkill";
 
 export class GiantSkill extends BaseSkill {
-  cast(ctx, attacker){
+  cast(ctx: any, attacker: number){
     const { combat, hud, scheduler, fighters, vfx } = ctx;
     const defender = (attacker === 0) ? 1 : 0;
     if (!this._prep(ctx, attacker)) return;

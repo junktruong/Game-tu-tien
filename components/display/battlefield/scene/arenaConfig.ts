@@ -56,7 +56,7 @@ const ARENAS = Object.freeze({
   },
 });
 
-export function getArenaConfig(arenaId) {
+export function getArenaConfig(arenaId?: string) {
   if (arenaId && ARENAS[arenaId]) return ARENAS[arenaId];
   return ARENAS["sky-temple"];
 }

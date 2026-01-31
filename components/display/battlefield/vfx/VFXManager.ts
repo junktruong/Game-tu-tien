@@ -1,5 +1,6 @@
+// @ts-nocheck
 // public/js/display/vfx/VFXManager.js
-import { clamp } from "../utils.js";
+import { clamp } from "../utils";
 
 function lerp(a, b, t){ return a + (b - a) * t; }
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
