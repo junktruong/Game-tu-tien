@@ -1,0 +1,189 @@
+.home-main {
+  min-height: 100vh;
+  padding: 32px 24px 60px;
+  background:
+    radial-gradient(circle at top, rgba(0, 255, 255, 0.12), transparent 50%),
+    radial-gradient(circle at 20% 20%, rgba(255, 79, 216, 0.12), transparent 45%),
+    var(--bg);
+}
+
+.home-layout {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.profile-canvas {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 0 18px rgba(0, 255, 255, 0.15);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  min-height: 240px;
+}
+
+.profile-canvas canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--panel);
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+}
+
+.profile-details h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.home-actions h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.home-actions p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  opacity: 0.75;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.stat-card strong {
+  font-size: 16px;
+}
+
+.skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skin-section {
+  background: var(--panel);
+  border-radius: 16px;
+  border: 1px solid var(--stroke);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.section-title p {
+  margin: 6px 0 0;
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.skin-card {
+  border-radius: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.4);
+  color: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.skin-card.active {
+  border-color: rgba(0, 255, 255, 0.45);
+  box-shadow: 0 0 16px rgba(0, 255, 255, 0.2);
+}
+
+.home-card {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .home-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+
+.profile-canvas{
+  width: 280px;       /* hoặc 100% tùy layout */
+  height: 280px;      /* ✅ QUAN TRỌNG: phải có height */
+  position: relative;
+}
+
+#profile-canvas{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
