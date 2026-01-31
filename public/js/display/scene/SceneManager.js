@@ -1,11 +1,15 @@
 // public/js/display/scene/SceneManager.js
+import { getArenaConfig } from "./arenaConfig.js";
+
 export class SceneManager {
-  constructor(stageEl){
+  constructor(stageEl, { arenaId } = {}){
     const THREE = window.THREE;
+    const arena = getArenaConfig(arenaId);
 
     this.stageEl = stageEl;
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(0x05050a, 0.018);
+    this.scene.background = new THREE.Color(arena.background);
+    this.scene.fog = new THREE.FogExp2(arena.fogColor, arena.fogDensity);
 
     this.camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 1000);
     this.camera.position.set(0, 16, 66);
@@ -21,23 +25,35 @@ export class SceneManager {
     stageEl.appendChild(this.renderer.domElement);
 
     // Lights
-    this.scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    this.scene.add(new THREE.AmbientLight(0xffffff, arena.ambientIntensity));
     const key = new THREE.DirectionalLight(0xffffff, 0.80);
-    key.position.set(30, 60, 40);
+    key.intensity = arena.keyLightIntensity;
+    key.position.set(
+      arena.keyLightPosition.x,
+      arena.keyLightPosition.y,
+      arena.keyLightPosition.z
+    );
     this.scene.add(key);
 
-    const p1 = new THREE.PointLight(0x00ffff, 1.3, 180, 2);
-    p1.position.set(-12, 12, 10);
-    this.scene.add(p1);
-
-    const p2 = new THREE.PointLight(0xff4fd8, 1.3, 180, 2);
-    p2.position.set( 12, 12, 10);
-    this.scene.add(p2);
+    for (const light of arena.pointLights) {
+      const point = new THREE.PointLight(
+        light.color,
+        light.intensity,
+        light.distance,
+        light.decay
+      );
+      point.position.set(light.x, light.y, light.z);
+      this.scene.add(point);
+    }
 
     // Ground
     const ground = new THREE.Mesh(
       new THREE.CircleGeometry(60, 72),
-      new THREE.MeshStandardMaterial({ color: 0x0b0b14, roughness: 0.95, metalness: 0.05 })
+      new THREE.MeshStandardMaterial({
+        color: arena.groundColor,
+        roughness: 0.95,
+        metalness: 0.05
+      })
     );
     ground.rotation.x = -Math.PI/2;
     ground.position.y = 0;
@@ -47,11 +63,11 @@ export class SceneManager {
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(34, 36, 96),
       new THREE.MeshStandardMaterial({
-        color: 0x00ffff,
-        emissive: 0x00ffff,
-        emissiveIntensity: 0.18,
+        color: arena.ringColor,
+        emissive: arena.ringColor,
+        emissiveIntensity: arena.ringEmissiveIntensity,
         transparent:true,
-        opacity:0.20,
+        opacity: arena.ringOpacity,
         side: THREE.DoubleSide
       })
     );

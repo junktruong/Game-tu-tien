@@ -13,13 +13,19 @@ function getRoom(){
   return (qs.get("room") || "demo").trim() || "demo";
 }
 
+function getArena(){
+  const qs = new URLSearchParams(location.search);
+  return (qs.get("arena") || qs.get("arenaId") || "sky-temple").trim() || "sky-temple";
+}
+
 const ROOM = getRoom();
+const ARENA = getArena();
 
 // DOM + systems
 const stage = document.getElementById("stage");
 const hud = new HUD(ROOM);
 const scheduler = new Scheduler();
-const sceneManager = new SceneManager(stage);
+const sceneManager = new SceneManager(stage, { arenaId: ARENA });
 
 // glow texture & factories
 const swordFactoryTmp = new SwordFactory(null);

@@ -1,0 +1,42 @@
+SOCKET SERVER CHECKLIST (backend)
+=================================
+
+Tình trạng hiện tại
+-------------------
+Server socket bạn gửi có thể chạy đúng với frontend hiện tại vì các event
+đều trùng khớp: join/joined/join_error, roster, input, aim, system.
+
+Nhưng nếu socket server chạy KHÁC origin so với web app (Next.js),
+thì cần bật CORS cho socket.io.
+
+Các chỉnh cần thiết (nếu server chạy khác domain/port)
+------------------------------------------------------
+1) Bật CORS cho socket.io:
+   - Thêm cấu hình cors khi khởi tạo Server.
+   - Cho phép origin là domain của web app (VD: https://tu-tien.app).
+
+2) Set biến môi trường ở frontend:
+   - NEXT_PUBLIC_SOCKET_URL="https://socket.your-domain.com"
+
+3) (Tuỳ chọn) Không cần serve static /public
+   - Nếu bạn chỉ chạy socket server, có thể bỏ express.static.
+
+Ví dụ patch nhanh (Node.js):
+----------------------------
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "";
+const io = new Server(server, {
+  cors: CLIENT_ORIGIN
+    ? { origin: CLIENT_ORIGIN, methods: ["GET", "POST"] }
+    : undefined,
+});
+
+Các biến môi trường đề xuất:
+----------------------------
+PORT=3333
+CLIENT_ORIGIN=https://your-frontend-domain.com
+
+Lưu ý:
+------
+- Nếu socket server chạy cùng domain/port với web app, không cần CORS.
+- Frontend đã dùng CDN để load socket.io client nên không còn phụ thuộc
+  vào /socket.io/socket.io.js của server.

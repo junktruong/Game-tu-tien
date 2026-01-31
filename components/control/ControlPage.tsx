@@ -120,7 +120,11 @@ export default function ControlPage() {
         strategy="beforeInteractive"
         crossOrigin="anonymous"
       />
-      <Script src="/socket.io/socket.io.js" strategy="beforeInteractive" />
+      <Script
+        src="https://cdn.socket.io/4.7.4/socket.io.min.js"
+        strategy="beforeInteractive"
+        crossOrigin="anonymous"
+      />
       <Script src="/js/control/main.js" strategy="afterInteractive" />
 
       <style jsx global>{`
