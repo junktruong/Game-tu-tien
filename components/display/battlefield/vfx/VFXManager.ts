@@ -177,6 +177,84 @@ export class VFXManager {
     return mesh;
   }
 
+  // ===== fire dragon projectile =====
+  spawnFireDragon({
+    from,
+    to,
+    colorHex,
+    speed = 120,
+    arc = 9.0,
+    segments = 12,
+    segmentGap = 0.06,
+    swayAmp = 1.6,
+    swayFreq = 6.5,
+    onHit = null
+  }){
+    const THREE = window.THREE;
+
+    const baseColor = new THREE.Color(colorHex);
+    const fireColor = baseColor.clone().lerp(new THREE.Color(0xff6a00), 0.65);
+
+    const grp = new THREE.Group();
+    this.scene.add(grp);
+
+    const headMat = new THREE.SpriteMaterial({
+      map: this.glowTex,
+      color: fireColor,
+      transparent:true,
+      opacity:0.95,
+      depthWrite:false,
+      blending: THREE.AdditiveBlending
+    });
+    const head = new THREE.Sprite(headMat);
+    head.scale.set(12, 12, 1);
+    grp.add(head);
+
+    const body = [];
+    for (let i=0;i<segments;i++){
+      const mat = new THREE.SpriteMaterial({
+        map: this.glowTex,
+        color: fireColor,
+        transparent:true,
+        opacity: 0.6,
+        depthWrite:false,
+        blending: THREE.AdditiveBlending
+      });
+      const seg = new THREE.Sprite(mat);
+      const s = 8.0 - i * 0.35;
+      seg.scale.set(s, s, 1);
+      grp.add(seg);
+      body.push(seg);
+    }
+
+    const dist = from.distanceTo(to);
+    const travel = Math.max(0.12, dist / Math.max(1, speed));
+    const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+    const ctrl = mid.clone();
+    ctrl.y += arc;
+
+    const dir = new THREE.Vector3().subVectors(to, from);
+    const perp = new THREE.Vector3(-dir.z, 0, dir.x);
+    if (perp.lengthSq() > 1e-6) perp.normalize();
+
+    this.projectiles.push({
+      mesh: grp,
+      head,
+      body,
+      t: 0,
+      travel,
+      start: from.clone(),
+      end: to.clone(),
+      ctrl,
+      perp,
+      segmentGap,
+      swayAmp,
+      swayFreq,
+      mode: "dragon",
+      onHit
+    });
+  }
+
   // ===== core fix: align sword length (Y-axis) to direction =====
   _alignMeshYToDir(mesh, dirNorm){
     const q = this._tmp.q;
@@ -710,6 +788,54 @@ export class VFXManager {
         if (pr.__delay <= 0){
           this.stopGiantCharge(pr.__ownerIndex);
           this.projectiles.splice(i, 1);
+        }
+        continue;
+      }
+
+      // C) fire dragon projectile
+      if (pr && pr.mode === "dragon"){
+        pr.t += dt;
+
+        const p = clamp(pr.t / pr.travel, 0, 1);
+        const pe = 1 - Math.pow(1 - p, 3);
+        const pos = this._tmp.v3b;
+
+        this._bezier2(pr.start, pr.ctrl, pr.end, pe, pos);
+
+        if (pr.perp?.lengthSq?.()){
+          const sway = Math.sin((t + pr.t) * pr.swayFreq) * pr.swayAmp * (1 - p);
+          pos.addScaledVector(pr.perp, sway);
+          pos.y += Math.cos((t + pr.t) * (pr.swayFreq * 0.8)) * pr.swayAmp * 0.25;
+        }
+
+        if (pr.head){
+          pr.head.position.copy(pos);
+          pr.head.material.opacity = 0.75 + 0.2 * Math.sin((t + pr.t) * 10);
+        }
+
+        if (pr.body?.length){
+          for (let i=0;i<pr.body.length;i++){
+            const seg = pr.body[i];
+            const pSeg = clamp(pe - i * pr.segmentGap, 0, 1);
+            const segPos = this._tmp.v3c;
+            this._bezier2(pr.start, pr.ctrl, pr.end, pSeg, segPos);
+
+            if (pr.perp?.lengthSq?.()){
+              const segSway = Math.sin((t + pr.t) * (pr.swayFreq + i*0.2)) * pr.swayAmp * (1 - pSeg) * 0.7;
+              segPos.addScaledVector(pr.perp, segSway);
+              segPos.y += Math.cos((t + pr.t) * (pr.swayFreq * 0.7)) * pr.swayAmp * 0.18;
+            }
+
+            seg.position.copy(segPos);
+            seg.material.opacity = (1 - i / pr.body.length) * (0.7 + 0.3 * (1 - pSeg));
+          }
+        }
+
+        if (p >= 1){
+          this.spawnBurstAt(pr.end.clone(), 0xff7a2b, 1.2);
+          if (typeof pr.onHit === "function") pr.onHit();
+          this.scene.remove(pr.mesh);
+          this.projectiles.splice(i,1);
         }
         continue;
       }
