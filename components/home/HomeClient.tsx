@@ -274,7 +274,7 @@ export default function HomeClient({ data }: HomeClientProps) {
                 <h2>Chiến đấu</h2>
                 <p className="muted">Chọn phòng sẵn có hoặc tự tạo phòng mới.</p>
               </div>
-              <Button onClick={() => router.push('/')}>Vào chiến đấu</Button>
+              <Button onClick={() => router.push('/room')}>Vào chiến đấu</Button>
             </div>
 
             <div className="stat-grid">
