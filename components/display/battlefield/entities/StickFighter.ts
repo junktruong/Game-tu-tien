@@ -4,6 +4,8 @@ import { clamp } from "../utils";
 export class StickFighter {
   scene: any;
   baseX: number;
+  baseY: number;
+  baseRotZ: number;
   facing: number;
   tilesHoriz: number;
   tilesVert: number;
@@ -18,6 +20,11 @@ export class StickFighter {
   flashOverlay: any;
   _flashT: number;
   _flashDur: number;
+  liftT: number;
+  liftDur: number;
+  liftHeight: number;
+  liftTiltDeg: number;
+  hitLockUntil: number;
   currentAction: number;
   currentFrame: number;
   lastFrameTime: number;
@@ -63,7 +70,7 @@ export class StickFighter {
       [this.actions.SKILL]: 4,      // Hàng 3 chỉ có 4 frame đầu
       [this.actions.RUN]: 8,
       [this.actions.HEAVY_ATTACK]: 8,
-      [this.actions.HURT]: 1
+      [this.actions.HURT]: 8
     };
 
     // Load Texture
@@ -98,7 +105,10 @@ export class StickFighter {
     this.group.add(this.mesh);
 
     // Căn chân chạm đất
-    this.group.position.set(x, planeHeight / 2, 0);
+    this.baseY = planeHeight / 2;
+    this.group.position.set(x, this.baseY, 0);
+    this.baseRotZ = 0;
+    this.group.rotation.z = this.baseRotZ;
 
     if (this.facing === -1) {
       this.mesh.scale.x = -1;
@@ -119,6 +129,7 @@ export class StickFighter {
 
     // ===== FIX HIT FLASH: dùng overlay additive, KHÔNG đổi mat.color của texture =====
     const flashMat = new THREE.MeshBasicMaterial({
+      map: this.texture,
       color: 0xff3333,
       transparent: true,
       opacity: 0.0,
@@ -137,6 +148,11 @@ export class StickFighter {
     // flash state
     this._flashT = 0;
     this._flashDur = 0;
+    this.liftT = 0;
+    this.liftDur = 0;
+    this.liftHeight = 0;
+    this.liftTiltDeg = 0;
+    this.hitLockUntil = 0;
 
     scene.add(this.group);
 
@@ -169,7 +185,7 @@ export class StickFighter {
         texture.needsUpdate = true;
       },
       undefined,
-      (err) => console.error("Lỗi load ảnh:", err)
+      (err: any) => console.error("Lỗi load ảnh:", err)
     );
 
     // ===== FIX MÀU: đảm bảo texture dùng sRGB =====
@@ -202,6 +218,10 @@ export class StickFighter {
       this.mat.map = newTexture;
       this.mat.needsUpdate = true;
     }
+    if (this.flashOverlay?.material) {
+      this.flashOverlay.material.map = newTexture;
+      this.flashOverlay.material.needsUpdate = true;
+    }
     this.texture = newTexture;
     this.updateTextureOffset();
   }
@@ -215,7 +235,20 @@ export class StickFighter {
     }
   }
 
+  playLift(height = 4.5, duration = 0.4, tiltDeg = 18) {
+    this.liftHeight = Math.max(0, height);
+    this.liftDur = Math.max(0.12, duration);
+    this.liftT = 0;
+    this.liftTiltDeg = tiltDeg;
+  }
+
   playCast(cfg: { isSkill?: boolean } | null) {
+    if (performance.now() < this.hitLockUntil) {
+      return;
+    }
+    if (this.anim.mode === "hit" && this.anim.t < this.anim.hitBack + this.anim.hitRecover) {
+      return;
+    }
     this.anim.mode = "cast";
     this.anim.t = 0;
 
@@ -234,6 +267,7 @@ export class StickFighter {
     this.anim.hitDist = heavy ? 4.0 : 2.5;
 
     this.changeAction(this.actions.HURT);
+    this.hitLockUntil = performance.now() + (this.anim.hitBack + this.anim.hitRecover) * 1000;
 
   }
 
@@ -265,6 +299,12 @@ export class StickFighter {
     const a = this.anim;
     a.t += dt;
     let offsetX = 0;
+    const forceHit = now < this.hitLockUntil;
+    if (forceHit && a.mode !== "hit") {
+      a.mode = "hit";
+      a.t = 0;
+      this.changeAction(this.actions.HURT);
+    }
 
     // ===== Update flash overlay fade =====
     if (this._flashDur > 0 && this.flashOverlay?.material) {
@@ -280,6 +320,9 @@ export class StickFighter {
 
     // --- A. LOGIC GAME ---
     if (a.mode === "hit") {
+      if (this.currentAction !== this.actions.HURT) {
+        this.changeAction(this.actions.HURT);
+      }
       const totalHitTime = a.hitBack + a.hitRecover;
       if (a.t < totalHitTime) {
         const p = clamp(a.t / a.hitBack, 0, 1);
@@ -300,7 +343,24 @@ export class StickFighter {
       this.changeAction(this.actions.IDLE);
     }
 
+    let liftOffset = 0;
+    let liftTilt = 0;
+    if (this.liftDur > 0) {
+      this.liftT += dt;
+      const p = clamp(this.liftT / this.liftDur, 0, 1);
+      liftOffset = Math.sin(p * Math.PI) * this.liftHeight;
+      liftTilt = Math.sin(p * Math.PI) * (this.liftTiltDeg * Math.PI / 180);
+      liftTilt *= (this.facing === -1 ? -1 : 1);
+      if (p >= 1) {
+        this.liftDur = 0;
+        this.liftT = 0;
+        this.liftTiltDeg = 0;
+      }
+    }
+
     this.group.position.x = this.baseX + offsetX;
+    this.group.position.y = this.baseY + liftOffset;
+    this.group.rotation.z = this.baseRotZ + liftTilt;
 
     // --- B. ANIMATION SPRITE ---
     this.frameTimer += dt;

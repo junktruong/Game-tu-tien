@@ -169,6 +169,46 @@ body {
   backdrop-filter: blur(10px);
 }
 
+#sword-picker {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  pointer-events: auto;
+  backdrop-filter: blur(10px);
+  color: #fff;
+  z-index: 12;
+}
+
+#sword-picker .label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+#sword-picker .preview {
+  width: 26px;
+  height: 68px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+}
+
+#sword-picker select {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+
 #toast {
   position: absolute;
   left: 50%;

@@ -1,59 +1,42 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
 import { initDisplay } from './battlefield/main';
 
-const SCRIPT_SOURCES = [
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/Pass.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js',
-  'https://cdn.socket.io/4.7.4/socket.io.min.js',
+const swordSkins = [
+  { id: 'azure', name: 'Lam Ngoc', url: '/img/swords/azure.svg', bloom: '#6fd7ff' },
+  { id: 'ember', name: 'Xich Huyet', url: '/img/swords/ember.svg', bloom: '#ff6a1a' },
+  { id: 'jade', name: 'Bich Lam', url: '/img/swords/jade.svg', bloom: '#46f2b4' },
+  { id: 'dekiem', name: 'Đế Kiếm (tiên nghịch)', url: '/img/swords/dekiem.png', bloom: '#95adcfde' },
 ];
-
-const loadedScripts = new Map<string, Promise<void>>();
-
-const loadScript = (src: string) => {
-  const cached = loadedScripts.get(src);
-  if (cached) {
-    return cached;
-  }
-
-  const promise = new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-    document.head.appendChild(script);
-  });
-
-  loadedScripts.set(src, promise);
-  return promise;
-};
 
 export default function DisplayPage() {
   const cleanupRef = useRef<null | (() => void)>(null);
+  const [selectedSkin, setSelectedSkin] = useState(swordSkins[0]?.url || '');
 
   useEffect(() => {
     let isActive = true;
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
 
     const boot = async () => {
-      window.__SOCKET_URL = socketUrl;
-      for (const src of SCRIPT_SOURCES) {
-        await loadScript(src);
-      }
+      const THREE = await import('three');
+      const { EffectComposer } = await import('three/examples/jsm/postprocessing/EffectComposer.js');
+      const { RenderPass } = await import('three/examples/jsm/postprocessing/RenderPass.js');
+      const { UnrealBloomPass } = await import('three/examples/jsm/postprocessing/UnrealBloomPass.js');
+
+      window.THREE = {
+        ...THREE,
+        EffectComposer,
+        RenderPass,
+        UnrealBloomPass,
+      };
 
       if (!isActive) {
         return;
       }
 
-      cleanupRef.current = initDisplay({ socketUrl });
+      cleanupRef.current = initDisplay({ socketUrl, io });
     };
 
     boot();
@@ -63,6 +46,29 @@ export default function DisplayPage() {
       cleanupRef.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('swordSkin') || '';
+      const hasSaved = swordSkins.some((s) => s.url === saved);
+      if (hasSaved) setSelectedSkin(saved);
+    } catch (_) {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSkin) return;
+    const skin = swordSkins.find((item) => item.url === selectedSkin) || swordSkins[0];
+    const bloom = skin?.bloom;
+    try {
+      localStorage.setItem('swordSkin', selectedSkin);
+      if (bloom) localStorage.setItem('swordBloom', bloom);
+    } catch (_) {
+      // ignore storage errors
+    }
+    window.__setSwordSkin?.(selectedSkin, bloom);
+  }, [selectedSkin]);
 
   return (
     <>
@@ -158,6 +164,21 @@ export default function DisplayPage() {
 
       <div id="toast" />
       <div id="status">Connecting…</div>
+
+      <div id="sword-picker">
+        <div className="label">SWORD</div>
+        <img src={selectedSkin} alt="sword" className="preview" />
+        <select
+          value={selectedSkin}
+          onChange={(event) => setSelectedSkin(event.target.value)}
+        >
+          {swordSkins.map((skin) => (
+            <option key={skin.id} value={skin.url}>
+              {skin.name}
+            </option>
+          ))}
+        </select>
+      </div>
     </>
   );
 }

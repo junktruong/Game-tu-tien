@@ -11,12 +11,12 @@ export class GiantSkill extends BaseSkill {
     const col = combat.getColor(attacker);
     const meta = this.def.meta || {};
 
-    // NEW: GIANT chuyển sang "2 bông hoa kiếm" (charge ở control, cast ở display)
-    const shots = 2;
-    const dmgEach = meta.dmgEach ?? 7;
+    // NEW: GIANT -> Tam Nhẫn Kiếm Chỉ (mưa kiếm thấp)
+    const shots = meta.shots ?? 12;
+    const dmgEach = meta.dmgEach ?? 3;
 
-    combat.setLastSkill(attacker, "Liên Hoa Kiếm · Song Ấn");
-    hud.setBanner(`🌸 P${attacker+1}: LIÊN HOA KIẾM · SONG ẤN`);
+    combat.setLastSkill(attacker, "Tam Nhẫn Kiếm Chỉ");
+    hud.setBanner(`🌸 P${attacker+1}: TAM NHẪN KIẾM CHỈ`);
 
     scheduler.schedule(this.def.anim?.charge ?? 0, ()=>{
       if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
@@ -28,9 +28,9 @@ export class GiantSkill extends BaseSkill {
         const fired = vfx.fireGiantFromStackedRings({
           ownerIndex: attacker,
           getTargetPos: () => combat.getHitPoint(defender),
-          speed: 160,
-          arc: 0,           // bay thẳng cho sạch
-          cadenceSec: 0.10, // đoạn đánh dài (tăng lên 0.12 nếu muốn dài hơn nữa)
+          speed: 200,
+          arc: 2.2,
+          cadenceSec: meta.cadenceSec ?? 0.06,
           onHit: ()=>{
             if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
             const heavy = (Math.random() < 0.12);
@@ -44,10 +44,11 @@ export class GiantSkill extends BaseSkill {
       }
 
       // fallback: nếu chưa có fireGiantCharge thì bắn 2 kiếm thường
-      const from = fighters[attacker].getMuzzlePos();
+      const from = fighters[attacker].getCorePos(6.2);
       const speed = meta.projectileSpeed ?? 150;
       for (let i=0;i<shots;i++){
-        const to = combat.getHitPoint(defender).clone().add(new THREE.Vector3((i===0?-1:1)*0.5, 0.2, 0));
+        const spread = (i - (shots - 1) / 2) * 0.28;
+        const to = combat.getHitPoint(defender).clone().add(new THREE.Vector3(spread, 0.1 + Math.sin(i * 0.6) * 0.12, 0));
         const onHit = ()=>{
           if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
           const heavy = (Math.random() < 0.12);
@@ -55,11 +56,11 @@ export class GiantSkill extends BaseSkill {
           combat.applyDamage(attacker, defender, dmgEach);
         };
         vfx.spawnProjectileBezier(from, to, col, speed, {
-          arc: 7.2,
+          arc: 4.2,
           side: (i % 2 === 0 ? -1 : 1),   // xen kẽ trái phải
-          sideScale: 2.6,
-          swirlAmp: 0.7,
-          swirlFreq: 10.5,
+          sideScale: 1.8,
+          swirlAmp: 0.45,
+          swirlFreq: 8.0,
           onHit
         });
       }

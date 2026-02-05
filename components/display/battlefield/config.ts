@@ -105,11 +105,11 @@ export const SKILLS = Object.freeze({
   },
 
   /**
-   * GIANT -> LIÊN HOA KIẾM · SONG ẤN
+   * GIANT -> TAM NHẪN KIẾM CHỈ
    * Control: 2 tay mở giơ cao, giữ 3s
    * Display:
-   * - Khi bắt đầu giữ: 2 "bông hoa kiếm" quay quanh người (GIANT_CHARGE)
-   * - Đủ 3s: bắn 2 bông hoa kiếm vào kẻ địch (GIANT)
+   * - Khi bắt đầu giữ: 3 nhẫn kiếm tụ thấp quanh người (GIANT_CHARGE)
+   * - Đủ 3s: bắn mưa kiếm vào kẻ địch (GIANT)
    */
   GIANT: {
     id: "GIANT",
@@ -119,22 +119,25 @@ export const SKILLS = Object.freeze({
     cd: 3.0,
     anim: { charge: 0.22, swing: 0.28, step: 0.85, lean: 0.14, slashFrom: 0.95, slashTo: -1.25 },
     meta: {
-      // GiantSkill hiện bắn 2 phát (shots=2). Dmg cân bằng theo ý bạn.
-      dmgEach: 18
+      shots: 12,
+      cadenceSec: 0.12,
+      projectileSpeed: 90,
+      dmgEach: 3
     }
   },
 
   /**
-   * FAN -> KIẾM QUAY VÒNG TRÊN ĐẦU RỒI BẮN VÀO NGƯỜI (ORBIT -> SHOOT)
+   * FAN -> VIỆT TỰ KIẾM TIÊN
    * Ý tưởng meta:
-   * - orbitSec: thời gian quay vòng trên đầu
-   * - orbitSwords: số kiếm quay vòng (visual)
-   * - orbitRadius: bán kính quay
+   * - orbitSec: thời gian tụ kiếm (2s)
+   * - orbitSwords: số kiếm tụ (visual, instanced)
+   * - orbitRadius: bán kính tụ
    * - orbitSpin: tốc độ xoay
    * - shots: số kiếm bắn ra (hit thật)
    * - shotSpeed: tốc độ bắn
    * - shotArc: độ cong
    * - dmgEach: dmg mỗi kiếm bắn
+   * - hitDelaySec: delay thêm để damage khớp lúc kiếm chạm
    */
   FAN: {
     id: "FAN",
@@ -144,18 +147,19 @@ export const SKILLS = Object.freeze({
     cd: 2.6,
     anim: { charge: 0.18, swing: 0.26, step: 0.60, lean: 0.10, slashFrom: 0.75, slashTo: -1.15 },
     meta: {
-      orbitSec: 0.55,
-      orbitSwords: 18,
-      orbitRadius: 7.5,
-      orbitSpin: 12.0,
+      orbitSec: 6.0,
+      orbitSwords: 6,
+      orbitRadius: 9.0,
+      orbitSpin: 7.5,
 
-      shots: 7,
-      shotSpeed: 96,
-      shotArc: 3.2,
-      dmgEach: 5,
+      shots: 1,
+      shotSpeed: 120,
+      shotArc: 3.8,
+      dmgEach: 18,
 
-      spread: 2.2,        // độ lệch target mỗi shot
-      cadenceSec: 0.08    // nhịp bắn
+      spread: 3.0,        // độ lệch target mỗi shot
+      cadenceSec: 0.06,   // nhịp bắn
+      hitDelaySec: 0.35   // delay thêm để damage khớp lúc kiếm chạm
     }
   },
 
@@ -196,7 +200,7 @@ export const SKILLS = Object.freeze({
   },
 
   /**
-   * SHAKA -> heal hoặc ULT (Vạn Kiếm Quy Tông)
+   * SHAKA -> heal hoặc ULT (Song Long Quá Hải)
    */
   SHAKA: {
     id: "SHAKA",
@@ -216,12 +220,19 @@ export const SKILLS = Object.freeze({
       ultHitDmg: 7,
       ultProjectileSpeed: 120,
 
-      // Vạn Kiếm visuals (instanced)
-      ultVisualSwords: 56,
-      ultOrbitSec: 0.45,
-      ultLaunchSec: 0.58,
-      ultSpread: 3.0,
-      ultArc: 7.5
+      // Song Long Quá Hải
+      ultChargeSec1: 2.0,
+      ultChargeSec2: 2.0,
+      ultDragonArc: 9.5,
+      ultDragonSpeed: 120,
+      ultDragonSwayAmp: 2.2,
+      ultDragonSwayFreq: 8.0,
+      ultDragonSegments: 16,
+      ultDragonSegmentGap: 0.055,
+      ultDragonPierceAt: 0.78,
+      ultDragonPierceTighten: 0.35,
+      ultDragonPierceStretch: 0.55,
+      ultDragonPierceSquash: 0.28
     }
   },
 });

@@ -27,7 +27,11 @@ export class SceneManager {
     this.renderer = new THREE.WebGLRenderer({ antialias:true });
     this.renderer.setSize(innerWidth, innerHeight);
     this.renderer.setPixelRatio(Math.min(2, devicePixelRatio || 1));
-    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    if ("outputColorSpace" in this.renderer) {
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    } else {
+      this.renderer.outputEncoding = THREE.sRGBEncoding;
+    }
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.10;
 
@@ -118,7 +122,7 @@ export class SceneManager {
       const THREE = window.THREE;
       this.composer = new THREE.EffectComposer(this.renderer);
       this.composer.addPass(new THREE.RenderPass(this.scene, this.camera));
-      const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 1.15, 0.85, 0.22);
+      const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.6, 0.35);
       this.composer.addPass(bloom);
       this.useComposer = true;
     } catch (_) {

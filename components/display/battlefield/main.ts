@@ -1,15 +1,18 @@
 // public/js/display/main.js
-import { Scheduler } from "./utils";
 import { HUD } from "./ui/HUD";
 import { SceneManager } from "./scene/SceneManager";
 import { StickFighter } from "./entities/StickFighter";
 import { SwordFactory } from "./entities/SwordFactory";
 import { VFXManager } from "./vfx/VFXManager";
-import { CombatSystem } from "./combat/CombatSystem";
-import { SkillRegistry } from "./skills/SkillRegistry";
+import { GameCore } from "./core/GameCore";
+import { GAME } from "./config";
+import type { GameEvent } from "./core/types";
+import { Scheduler } from "./utils";
+import { RenderRegistry } from "./render/RenderRegistry";
 
 type DisplayInitOptions = {
   socketUrl?: string;
+  io: (url?: string) => any;
 };
 
 const getRoom = () => {
@@ -22,7 +25,7 @@ const getArena = () => {
   return (qs.get("arena") || qs.get("arenaId") || "sky-temple").trim() || "sky-temple";
 };
 
-export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
+export const initDisplay = ({ socketUrl, io }: DisplayInitOptions) => {
   const ROOM = getRoom();
   const ARENA = getArena();
 
@@ -34,13 +37,14 @@ export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
   stage.textContent = "";
 
   const hud = new HUD(ROOM);
-  const scheduler = new Scheduler();
   const sceneManager = new SceneManager(stage, { arenaId: ARENA });
 
   // glow texture & factories
   const swordFactoryTmp = new SwordFactory(null);
   const glowTex = swordFactoryTmp.createGlowTexture();
   const swordFactory = new SwordFactory(glowTex);
+  const defaultSwordSkin = "/img/swords/azure.svg";
+  const defaultSwordBloom = 0x6fd7ff;
 
   // fighters
   const fighters = [
@@ -50,11 +54,47 @@ export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
 
   // vfx + combat
   const vfx = new VFXManager(sceneManager.scene, glowTex, swordFactory);
-  const combat = new CombatSystem({ hud, scheduler, fighters, vfx, sceneManager });
-  const registry = new SkillRegistry();
+  const renderScheduler = new Scheduler();
+  const renderRegistry = new RenderRegistry();
+  const core = new GameCore({
+    onEvent: (event: GameEvent) => handleCoreEvent(event),
+  });
+
+  const parseBloom = (value: any) => {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const cleaned = value.trim().replace(/^#/, "").replace(/^0x/i, "");
+      const parsed = parseInt(cleaned, 16);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+    return null;
+  };
+
+  const applySwordSkin = (url: string, bloom?: string | number | null) => {
+    const skin = (url || "").trim() || defaultSwordSkin;
+    swordFactory.setSwordTexture(skin);
+    const bloomHex = parseBloom(bloom) ?? defaultSwordBloom;
+    core.setVfxColor(0, bloomHex);
+    core.setVfxColor(1, bloomHex);
+  };
+
+  try {
+    const savedSkin = localStorage.getItem("swordSkin") || "";
+    const savedBloom = localStorage.getItem("swordBloom") || "";
+    applySwordSkin(savedSkin, savedBloom);
+    window.__setSwordSkin = (url: string, bloom?: string | number) => {
+      applySwordSkin(url, bloom);
+      localStorage.setItem("swordSkin", (url || "").trim() || defaultSwordSkin);
+      if (bloom != null) {
+        localStorage.setItem("swordBloom", String(bloom));
+      }
+    };
+  } catch (_) {
+    applySwordSkin(defaultSwordSkin, defaultSwordBloom);
+  }
 
   // socket
-  const socket = window.io(socketUrl || window.__SOCKET_URL || undefined);
+  const socket = io(socketUrl || undefined);
 
   socket.on("connect", () => {
     hud.setStatus(`✅ Connected | room=${ROOM}`);
@@ -69,33 +109,7 @@ export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
   });
 
   socket.on("input", (msg: { player: number; gesture: string }) => {
-    const ctx = { combat, hud, scheduler, fighters, vfx, sceneManager };
-    const g = String(msg?.gesture || "").toUpperCase();
-    const attacker = msg.player === 1 ? 0 : 1;
-
-    // ===== GIANT charge (từ Control) =====
-    if (g === "GIANT_CHARGE") {
-      if (typeof vfx.startGiantCharge === "function") {
-        vfx.startGiantCharge(fighters[attacker], combat.getColor(attacker), attacker, {
-          count: 16,
-          radius: 7.0,
-          spin: 3.2,
-          scale: 0.7,
-        });
-
-        hud.setBanner(`🌸 P${attacker + 1}: GIANT CHARGE… (giữ 3s)`, true);
-        combat.setLastSkill(attacker, "Giant Charge");
-      }
-      return;
-    }
-    if (g === "GIANT_CANCEL") {
-      if (typeof vfx.stopGiantCharge === "function") {
-        vfx.stopGiantCharge(attacker);
-      }
-      return;
-    }
-
-    registry.handleGesture(ctx, msg.player, msg.gesture);
+    core.handleGesture(msg.player, msg.gesture);
   });
 
   socket.on("aim", () => {
@@ -120,25 +134,10 @@ export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
     const elapsed = clock.elapsedTime;
 
     // hitstop
-    if (combat.hitstop > 0) {
-      combat.hitstop = Math.max(0, combat.hitstop - rawDt);
-      const dt = rawDt * 0.25;
+    const dt = core.getState().hitstop > 0 ? rawDt * 0.25 : rawDt;
 
-      scheduler.update(dt);
-      combat.update(dt);
-      for (const f of fighters) f.update(dt, elapsed);
-      vfx.update(dt, elapsed, fighters);
-
-      sceneManager.update(rawDt);
-      sceneManager.render();
-      rafId = requestAnimationFrame(loop);
-      return;
-    }
-
-    const dt = rawDt;
-
-    scheduler.update(dt);
-    combat.update(dt);
+    core.update(dt, rawDt);
+    renderScheduler.update(dt);
     for (const f of fighters) f.update(dt, elapsed);
     vfx.update(dt, elapsed, fighters);
 
@@ -161,4 +160,33 @@ export const initDisplay = ({ socketUrl }: DisplayInitOptions) => {
     removeEventListener("resize", handleResize);
     socket.disconnect();
   };
+
+  function handleCoreEvent(event: GameEvent) {
+    switch (event.type) {
+      case "STATE":
+        hud.update(GAME, event.state.players);
+        break;
+      case "BANNER":
+        hud.setBanner(event.text, event.sticky);
+        return;
+      case "TOAST":
+        hud.showToast(event.text);
+        return;
+      case "SHAKE":
+        sceneManager.shake(event.amount);
+        return;
+      case "GIANT_CHARGE_START":
+        hud.setBanner(`🌸 P${event.attacker + 1}: TAM NHẪN KIẾM CHỈ… (giữ 3s)`, true);
+        break;
+      default:
+        break;
+    }
+
+    renderRegistry.handle(event, {
+      core,
+      fighters,
+      vfx,
+      scheduler: renderScheduler,
+    });
+  }
 };

@@ -16,81 +16,66 @@ export class ShakaSkill extends BaseSkill {
       combat.setCd(attacker, "ULT", meta.ultCd || 10.0);
 
       fighters[attacker].playCast({ charge:0.26, swing:0.34, step:0.65, lean:0.10, slashFrom:0.35, slashTo:0.35 });
-      combat.setLastSkill(attacker, "Hỏa Long Ấn");
-      hud.setBanner(`🐉 P${attacker+1}: HỎA LONG ẤN!!!`);
+      combat.setLastSkill(attacker, "Song Long Quá Hải");
+      hud.setBanner(`🐉 P${attacker+1}: SONG LONG QUÁ HẢI!!!`);
 
-      const chargeSec = 0.45;
-      const sealDur = 0.7;
-      const sealHeights = [11.5, 14.2, 16.6];
+      const chargeSec1 = meta.ultChargeSec1 ?? 2.0;
+      const chargeSec2 = meta.ultChargeSec2 ?? 2.0;
+      const sealDur = chargeSec1 + chargeSec2 + 0.6;
 
       const col = combat.getColor(attacker);
       const atk = fighters[attacker];
 
-      if (typeof vfx.startGiantCharge === "function"){
-        vfx.startGiantCharge(atk, col, attacker, {
-          ringEverySec: 0.16,
-          maxRings: 3,
-          baseHeight: 10.0,
-          heightStep: 2.4,
-          baseRadius: 6.6,
-          radiusStep: 2.2,
-          spin: 3.6,
-          countPerRing: 10
-        });
+      if (typeof vfx.spawnMagicCircle === "function"){
+        vfx.spawnMagicCircle(atk.getCorePos(0.6), col, 1.15, sealDur, 2.6);
+        vfx.spawnMagicCircle(atk.getCorePos(11.2), col, 0.45, sealDur, 3.2);
       }
 
-      for (let i=0;i<sealHeights.length;i++){
-        if (typeof vfx.spawnMagicCircle === "function"){
-          vfx.spawnMagicCircle(atk.getCorePos(sealHeights[i]), col, 0.35 + i * 0.05, sealDur, 2.4 + i * 0.7);
-        }
-      }
+      const hits = meta.ultHits ?? GAME.ultHits;
+      const hitDmg = meta.ultHitDmg ?? GAME.ultHitDmg;
+      const swayAmp = meta.ultDragonSwayAmp ?? 2.2;
+      const swayFreq = meta.ultDragonSwayFreq ?? 8.0;
+      const segments = meta.ultDragonSegments ?? 16;
+      const segmentGap = meta.ultDragonSegmentGap ?? 0.055;
+      const pierceAt = meta.ultDragonPierceAt ?? 0.78;
+      const pierceTighten = meta.ultDragonPierceTighten ?? 0.35;
+      const pierceStretch = meta.ultDragonPierceStretch ?? 0.55;
+      const pierceSquash = meta.ultDragonPierceSquash ?? 0.28;
+      const firstHits = Math.max(1, Math.floor(hits / 2));
+      const secondHits = Math.max(1, hits - firstHits);
 
-      scheduler.schedule(chargeSec, ()=>{
-        if (typeof vfx.stopGiantCharge === "function"){
-          vfx.stopGiantCharge(attacker);
-        }
-
+      const summonDragon = (idx: number, pulseCount: number)=>{
         const tgt = combat.getHitPoint(defender);
-
-        // ấn chú dưới người + dưới mục tiêu
-        if (typeof vfx.spawnMagicCircle === "function"){
-          vfx.spawnMagicCircle(atk.getCorePos(0.6), col, 1.0, 0.95, 2.6);
-          vfx.spawnMagicCircle(tgt.clone().setY(0.6), col, 1.15, 0.95, -2.2);
-        }
-
-        // tụ lực thêm
-        vfx.spawnBurstAt(atk.getCorePos(11.0), col, 1.75);
+        vfx.spawnBurstAt(atk.getCorePos(10.8), col, 1.75);
         if (typeof vfx.spawnShockwave === "function"){
           vfx.spawnShockwave(atk.getCorePos(0.6), col, 2.0, 26, 0.42);
           vfx.spawnShockwave(tgt.clone().setY(0.6), col, 1.6, 24, 0.42);
         }
 
-        const hits = meta.ultHits ?? GAME.ultHits;
-        const hitDmg = meta.ultHitDmg ?? GAME.ultHitDmg;
-        const totalDmg = hitDmg * hits;
-        const pulses = Math.max(2, Math.min(4, hits));
-        const dmgPerPulse = Math.ceil(totalDmg / pulses);
-
         if (typeof vfx.spawnFireDragon === "function"){
           vfx.spawnFireDragon({
-            from: atk.getCorePos(12.2),
+            from: atk.getCorePos(11.6),
             to: tgt.clone().setY(6.0),
             colorHex: col,
-            speed: meta.ultProjectileSpeed ?? 120,
-            arc: 9.5,
-            segments: 12,
-            segmentGap: 0.07,
-            swayAmp: 1.8,
-            swayFreq: 7.2,
+            speed: meta.ultDragonSpeed ?? 120,
+            arc: (meta.ultDragonArc ?? 9.5) + idx * 0.6,
+            segments,
+            segmentGap,
+            swayAmp,
+            swayFreq,
+            pierceAt,
+            pierceTighten,
+            pierceStretch,
+            pierceSquash,
             onHit: ()=>{
               if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
 
-              for (let i=0;i<pulses;i++){
+              for (let i=0;i<pulseCount;i++){
                 scheduler.schedule(i * 0.08, ()=>{
                   if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
                   const heavy = (i === 0);
                   combat.hitReact(attacker, defender, heavy);
-                  combat.applyDamage(attacker, defender, dmgPerPulse);
+                  combat.applyDamage(attacker, defender, hitDmg);
 
                   const hp = combat.getHitPoint(defender);
                   vfx.spawnSlash(hp.clone(), col, Math.random()*0.9);
@@ -100,6 +85,16 @@ export class ShakaSkill extends BaseSkill {
             }
           });
         }
+      };
+
+      scheduler.schedule(chargeSec1, ()=>{
+        if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
+        summonDragon(0, firstHits);
+      });
+
+      scheduler.schedule(chargeSec1 + chargeSec2, ()=>{
+        if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
+        summonDragon(1, secondHits);
       });
 
       return;

@@ -6,9 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { GameData, RoomProfile } from '../../types/game';
 import GoogleLoginGate from './GoogleLoginGate';
 import HomeClient from '../home/HomeClient';
-import Script from 'next/script';
 import '@/app/home/home.css';
-import '@/components/display/battlefield/main';
 
 export default function LobbyClient({ data }: { data: GameData }) {
   const { data: session, status } = useSession();

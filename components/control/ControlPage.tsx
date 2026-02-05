@@ -1,9 +1,53 @@
 'use client';
 
+import { useEffect } from 'react';
 import Script from 'next/script';
+import { initControl } from './controlClient';
 
 export default function ControlPage() {
   const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
+
+  useEffect(() => {
+    let cleanup: null | (() => void) = null;
+    let cancelled = false;
+
+    const boot = async () => {
+      if (!(window as any).Hands) {
+        let tries = 0;
+        const waitForHands = () =>
+          new Promise<void>((resolve, reject) => {
+            const tick = () => {
+              if ((window as any).Hands) {
+                resolve();
+                return;
+              }
+              tries += 1;
+              if (tries > 60) {
+                reject(new Error('Hands.js load timeout'));
+                return;
+              }
+              setTimeout(tick, 100);
+            };
+            tick();
+          });
+        try {
+          await waitForHands();
+        } catch {
+          return;
+        }
+      }
+
+      if (cancelled) return;
+      cleanup = initControl({ socketUrl });
+    };
+
+    boot();
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [socketUrl]);
 
   return (
     <>
@@ -55,7 +99,7 @@ export default function ControlPage() {
         <div className="move">
           <span className="icon">⚡</span>
           <div>
-            <span className="name">ULT:</span>
+            <span className="name">Song Long Quá Hải:</span>
             <span className="desc">1 tay ✌️ + 1 tay 🤘 (ATTACK + WALL cùng lúc)</span>
           </div>
         </div>
@@ -63,7 +107,7 @@ export default function ControlPage() {
         <div className="move">
           <span className="icon">🙌</span>
           <div>
-            <span className="name">GIANT:</span>
+            <span className="name">Tam Nhẫn Kiếm Chỉ:</span>
             <span className="desc">2 tay mở giơ cao, giữ 3 giây</span>
           </div>
         </div>
@@ -98,7 +142,7 @@ export default function ControlPage() {
         <div className="move">
           <span className="icon">🖐️</span>
           <div>
-            <span className="name">Fan:</span>
+            <span className="name">Việt Tự Kiếm Tiên:</span>
             <span className="desc">4 ngón (khép ngón cái)</span>
           </div>
         </div>
@@ -111,23 +155,10 @@ export default function ControlPage() {
       <video className="input_video" playsInline muted />
 
       <Script
-        id="socket-config"
-        strategy="beforeInteractive"
-        dangerouslySetInnerHTML={{
-          __html: `window.__SOCKET_URL = ${JSON.stringify(socketUrl)};`,
-        }}
-      />
-      <Script
         src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
         strategy="beforeInteractive"
         crossOrigin="anonymous"
       />
-      <Script
-        src="https://cdn.socket.io/4.7.4/socket.io.min.js"
-        strategy="beforeInteractive"
-        crossOrigin="anonymous"
-      />
-      <Script src="/js/control/main.js" strategy="afterInteractive" />
 
       <style jsx global>{`
         :root {

@@ -11,19 +11,19 @@ export class FanSkill extends BaseSkill {
     const col = combat.getColor(attacker);
     const meta = this.def.meta || {};
 
-    const orbitSec = meta.orbitSec ?? 0.55;
-    const orbitSwords = meta.orbitSwords ?? 18;
+    const orbitSec = meta.orbitSec ?? 2.0;
+    const orbitSwords = meta.orbitSwords ?? 1200;
 
-    const shots = meta.shots ?? 7;
-    const shotSpeed = meta.shotSpeed ?? 96;
-    const shotArc = meta.shotArc ?? 3.2;
-    const dmgEach = meta.dmgEach ?? 5;
+    const shots = meta.shots ?? 1;
+    const shotSpeed = meta.shotSpeed ?? 120;
+    const shotArc = meta.shotArc ?? 3.8;
+    const dmgEach = meta.dmgEach ?? 18;
 
-    const spread = meta.spread ?? 2.2;
-    const cadenceSec = meta.cadenceSec ?? 0.08;
+    const spread = meta.spread ?? 3.0;
+    const cadenceSec = meta.cadenceSec ?? 0.06;
 
-    combat.setLastSkill(attacker, "Phi Kiếm · Quay Tụ");
-    hud.setBanner(`🌀 P${attacker+1}: KIẾM QUAY TỤ RỒI XUYÊN SÁT`);
+    combat.setLastSkill(attacker, "Việt Tự Kiếm Tiên");
+    hud.setBanner(`🌀 P${attacker+1}: VIỆT TỰ KIẾM TIÊN`);
 
     scheduler.schedule(this.def.anim?.charge ?? 0, ()=>{
       if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
@@ -32,15 +32,19 @@ export class FanSkill extends BaseSkill {
       if (typeof vfx.playVankiemUlt === "function"){
         vfx.playVankiemUlt({
           fromFighter: fighters[attacker],
-          getTargetPos: () => combat.getHitPoint(defender),
+          getTargetPos: () => combat.getHitPoint(defender).clone().setY(7.0),
           colorHex: col,
 
           visualSwords: orbitSwords,
-          hits: shots,
+          hits: 1,
           orbitSec: orbitSec,
-          launchSec: Math.max(0.35, shots * cadenceSec), // gần với nhịp bắn
+          launchSec: 0.35,
           spread: spread,
           arc: shotArc,
+          singleLaunch: true,
+          bigScale: 3.6,
+          gatherRadiusStart: 14,
+          gatherRadiusEnd: 6.5,
 
           onHit: ()=>{
             if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
@@ -60,15 +64,16 @@ export class FanSkill extends BaseSkill {
 
       // ===== Fallback (nếu VFXManager chưa có playVankiemUlt) =====
       // Orbit giả bằng slash quanh đầu
-      const head = fighters[attacker].getCorePos(13.0);
-      const steps = Math.max(6, Math.floor(orbitSec / 0.07));
+      const head = fighters[attacker].getCorePos(11.0);
+      const steps = Math.max(10, Math.floor(orbitSec / 0.08));
 
       for (let i = 0; i < steps; i++){
         scheduler.schedule(i * (orbitSec / steps), ()=>{
           if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
 
           const a = (i / steps) * Math.PI * 2 * 2.0 * (attacker===0?1:-1);
-          const p = head.clone().add(new THREE.Vector3(Math.cos(a)*4.8, Math.sin(a*0.7)*1.2, 0));
+          const r = 8.5 - (i / steps) * 3.0;
+          const p = head.clone().add(new THREE.Vector3(Math.cos(a)*r, Math.sin(a*0.7)*1.2, 0));
           vfx.spawnSlash(p, col, a);
           vfx.spawnBurstAt(p, col, 0.45);
         });
@@ -88,6 +93,33 @@ export class FanSkill extends BaseSkill {
             ));
 
             vfx.spawnSlash(from.clone(), col, (attacker===0?0.45:-0.45));
+
+            const bigSword = vfx.swordFactory?.createSwordProjectile?.(col);
+            if (bigSword){
+              bigSword.scale.setScalar(3.6);
+              bigSword.position.copy(from);
+              vfx.scene.add(bigSword);
+              const dist = from.distanceTo(to);
+              const travel = Math.max(0.12, dist / Math.max(1, shotSpeed));
+              vfx.projectiles.push({
+                mesh: bigSword,
+                t: 0,
+                travel,
+                start: from.clone(),
+                end: to.clone(),
+                wobble: 0.2,
+                arc: shotArc,
+                onHit: ()=>{
+                  if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
+
+                  const heavy = true;
+                  combat.hitReact(attacker, defender, heavy);
+                  combat.applyDamage(attacker, defender, dmgEach);
+                  vfx.spawnBurstAt(to.clone(), col, 1.2);
+                }
+              });
+              return;
+            }
 
             vfx.spawnProjectileToTarget(from, to, col, shotSpeed, 1.0, shotArc, ()=>{
               if (!combat.isAlive(attacker) || !combat.isAlive(defender)) return;
