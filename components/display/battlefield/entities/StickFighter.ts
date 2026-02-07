@@ -15,7 +15,7 @@ const MODEL_FORWARD_AXIS: Record<string, "X" | "Z"> = {
   "/models/stick_fighter.glb": "Z",
 };
 const MODEL_YAW_OFFSET: Record<string, number> = {
-  "/models/model05.glb": Math.PI,
+  "/models/model05.glb": Math.PI, 
   "/models/model06.glb": Math.PI,
 };
 const SKINNABLE_MODEL_URLS = new Set(["/models/stick_fighter.glb"]);
