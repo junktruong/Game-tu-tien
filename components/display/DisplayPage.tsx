@@ -1,29 +1,78 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { io } from 'socket.io-client';
-import { initDisplay } from './battlefield/main';
+import { useEffect, useRef, useState } from "react";
+import { io } from "socket.io-client";
+import { initDisplay } from "./battlefield/main";
+import { initControl } from "../control/controlClient";
 
 const swordSkins = [
-  { id: 'azure', name: 'Lam Ngoc', url: '/img/swords/azure.svg', bloom: '#6fd7ff' },
-  { id: 'ember', name: 'Xich Huyet', url: '/img/swords/ember.svg', bloom: '#ff6a1a' },
-  { id: 'jade', name: 'Bich Lam', url: '/img/swords/jade.svg', bloom: '#46f2b4' },
-  { id: 'dekiem', name: 'Đế Kiếm (tiên nghịch)', url: '/img/swords/dekiem.png', bloom: '#95adcfde' },
+  {
+    id: "dekiem",
+    name: "Đế Kiếm (tiên nghịch)",
+    url: "/img/swords/dekiem.png",
+    bloom: "#95adcfde",
+  },
+  {
+    id: "loihoa",
+    name: "Lôi Hoả Kiếm (X)",
+    url: "/img/swords/loihoa.png",
+    bloom: "#ee3333",
+  },
+  {
+    id: "longkiem",
+    name: "Long Kiếm (X)",
+    url: "/img/swords/longkiem.png",
+    bloom: "#ffe343",
+  },
+  {
+    id: "tuhackiem",
+    name: "Tử Hắc Kiếm (X)",
+    url: "/img/swords/tuhackiem.png",
+    bloom: "#b801d0",
+  },
+  {
+    id: "bacdaukiem",
+    name: "Bắc Đẩu Kiếm (X)",
+    url: "/img/swords/bacdaukiem.png",
+    bloom: "#86dbff",
+  },
+  {
+    id: "xich",
+    name: "Xích Kiếm (X)",
+    url: "/img/swords/xich.png",
+    bloom: "#ff1212",
+  },
+  {
+    id: "bichhai",
+    name: "Bích Hải Kiếm (X)",
+    url: "/img/swords/bichhai.png",
+    bloom: "#60ff63",
+  },
+  {
+    id: "banghoa",
+    name: "Băng Hoả Kiếm (X)",
+    url: "/img/swords/banghoa.png",
+    bloom: "#35f1c8",
+  },
 ];
 
 export default function DisplayPage() {
   const cleanupRef = useRef<null | (() => void)>(null);
-  const [selectedSkin, setSelectedSkin] = useState(swordSkins[0]?.url || '');
+  const controlCleanupRef = useRef<null | (() => void)>(null);
+  const [selectedSkin, setSelectedSkin] = useState(swordSkins[0]?.url || "");
 
   useEffect(() => {
     let isActive = true;
-    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
 
     const boot = async () => {
-      const THREE = await import('three');
-      const { EffectComposer } = await import('three/examples/jsm/postprocessing/EffectComposer.js');
-      const { RenderPass } = await import('three/examples/jsm/postprocessing/RenderPass.js');
-      const { UnrealBloomPass } = await import('three/examples/jsm/postprocessing/UnrealBloomPass.js');
+      const THREE = await import("three");
+      const { EffectComposer } =
+        await import("three/examples/jsm/postprocessing/EffectComposer.js");
+      const { RenderPass } =
+        await import("three/examples/jsm/postprocessing/RenderPass.js");
+      const { UnrealBloomPass } =
+        await import("three/examples/jsm/postprocessing/UnrealBloomPass.js");
 
       window.THREE = {
         ...THREE,
@@ -48,8 +97,18 @@ export default function DisplayPage() {
   }, []);
 
   useEffect(() => {
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "";
+
+    controlCleanupRef.current = initControl({ socketUrl });
+
+    return () => {
+      controlCleanupRef.current?.();
+    };
+  }, []);
+
+  useEffect(() => {
     try {
-      const saved = localStorage.getItem('swordSkin') || '';
+      const saved = localStorage.getItem("swordSkin") || "";
       const hasSaved = swordSkins.some((s) => s.url === saved);
       if (hasSaved) setSelectedSkin(saved);
     } catch (_) {
@@ -59,11 +118,12 @@ export default function DisplayPage() {
 
   useEffect(() => {
     if (!selectedSkin) return;
-    const skin = swordSkins.find((item) => item.url === selectedSkin) || swordSkins[0];
+    const skin =
+      swordSkins.find((item) => item.url === selectedSkin) || swordSkins[0];
     const bloom = skin?.bloom;
     try {
-      localStorage.setItem('swordSkin', selectedSkin);
-      if (bloom) localStorage.setItem('swordBloom', bloom);
+      localStorage.setItem("swordSkin", selectedSkin);
+      if (bloom) localStorage.setItem("swordBloom", bloom);
     } catch (_) {
       // ignore storage errors
     }
@@ -77,7 +137,7 @@ export default function DisplayPage() {
       <div id="ui">
         <div className="top">
           <div className="hud">
-            <div className="name" style={{ color: 'var(--c1)' }}>
+            <div className="name" style={{ color: "var(--c1)" }}>
               PLAYER 1
             </div>
 
@@ -91,7 +151,7 @@ export default function DisplayPage() {
             </div>
 
             <div className="row">
-              <div className="bar" style={{ height: '10px' }}>
+              <div className="bar" style={{ height: "10px" }}>
                 <div id="qi1" className="fill qi1" />
               </div>
               <div id="qi1t" className="small">
@@ -116,8 +176,8 @@ export default function DisplayPage() {
             </div>
           </div>
 
-          <div className="hud" style={{ textAlign: 'right' }}>
-            <div className="name" style={{ color: 'var(--c2)' }}>
+          <div className="hud" style={{ textAlign: "right" }}>
+            <div className="name" style={{ color: "var(--c2)" }}>
               PLAYER 2
             </div>
 
@@ -134,7 +194,7 @@ export default function DisplayPage() {
               <div id="qi2t" className="small">
                 100
               </div>
-              <div className="bar" style={{ height: '10px' }}>
+              <div className="bar" style={{ height: "10px" }}>
                 <div id="qi2" className="fill qi2" />
               </div>
             </div>
@@ -179,6 +239,137 @@ export default function DisplayPage() {
           ))}
         </select>
       </div>
+
+      <div id="control-panel">
+        <div className="control-header">
+          <div className="control-title">CONTROL</div>
+          <button id="toggleControls" className="btn small">
+            Thu gọn
+          </button>
+        </div>
+
+        <div className="control-body">
+          <div id="skill-name">—</div>
+          <div id="loading">
+            Nhấn “Bắt đầu Camera” để kích hoạt nhận diện tay.
+          </div>
+          <button id="startBtn" className="btn">
+            Bắt đầu Camera
+          </button>
+
+          <div id="controls">
+            <div id="net">
+              🔌 Net: <span id="netText">Chưa kết nối</span>
+            </div>
+            <label>
+              Room <input id="roomInput" type="text" defaultValue="demo" />
+            </label>
+            <label>
+              Player
+              <select id="playerSelect" defaultValue="1">
+                <option value="1">Player 1</option>
+                <option value="2">Player 2</option>
+              </select>
+            </label>
+            <button id="joinBtn" className="btn">
+              Kết nối Room
+            </button>
+
+            <div id="poseControls" className="panel">
+              <div className="panel-title">Arm Tracking</div>
+              <div className="row">
+                <button id="calibrateBtn" className="btn secondary">
+                  Calibrate
+                </button>
+                <label className="toggle">
+                  <input id="mirrorToggle" type="checkbox" defaultChecked />
+                  <span>Mirror</span>
+                </label>
+                <label className="toggle">
+                  <input id="debugToggle" type="checkbox" />
+                  <span>Debug</span>
+                </label>
+                <label className="toggle">
+                  <input id="armGestureToggle" type="checkbox" />
+                  <span>Arm Pose</span>
+                </label>
+              </div>
+              <div className="hint">
+                Calibrate khi tay ở pose chuẩn để giảm lệch.
+              </div>
+            </div>
+
+            <div id="cameraControls" className="panel">
+              <div className="panel-title">Camera</div>
+              <label>
+                Mode
+                <select id="cameraMode" defaultValue="TPS_BACK">
+                  <option value="TPS_BACK">TPS_BACK</option>
+                  <option value="TPS_FRONT">TPS_FRONT</option>
+                  <option value="FPS">FPS</option>
+                  <option value="ORBIT">ORBIT</option>
+                  <option value="TOP">TOP</option>
+                  <option value="SIDE">SIDE</option>
+                  <option value="CINEMATIC_A">CINEMATIC_A</option>
+                  <option value="CINEMATIC_B">CINEMATIC_B</option>
+                </select>
+              </label>
+              <label>
+                Target
+                <select id="cameraTarget" defaultValue="center">
+                  <option value="center">Center</option>
+                  <option value="p1">P1</option>
+                  <option value="p2">P2</option>
+                </select>
+              </label>
+              <label>
+                Yaw (deg) <span id="cameraYawValue">0</span>
+                <input
+                  id="cameraYaw"
+                  type="range"
+                  min="-180"
+                  max="180"
+                  defaultValue="0"
+                />
+              </label>
+              <label>
+                Pitch (deg) <span id="cameraPitchValue">10</span>
+                <input
+                  id="cameraPitch"
+                  type="range"
+                  min="-30"
+                  max="60"
+                  defaultValue="10"
+                />
+              </label>
+              <label>
+                Dist <span id="cameraDistValue">44</span>
+                <input
+                  id="cameraDist"
+                  type="range"
+                  min="12"
+                  max="120"
+                  defaultValue="44"
+                />
+              </label>
+              <label>
+                FOV <span id="cameraFovValue">50</span>
+                <input
+                  id="cameraFov"
+                  type="range"
+                  min="30"
+                  max="90"
+                  defaultValue="50"
+                />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <video className="input_video" playsInline muted />
+      <video id="cameraPreview" className="camera_preview" playsInline muted />
+      <canvas id="poseDebug" className="pose_debug" width="640" height="480" />
     </>
   );
 }

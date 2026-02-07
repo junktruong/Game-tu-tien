@@ -5,6 +5,21 @@ export function fanOnCast(ctx, event){
   const col = ctx.core.getColor(event.attacker);
   const gatherSec = SKILLS.FAN.meta?.orbitSec ?? 4.0;
   const shootSec = SKILLS.FAN.meta?.hitDelaySec ?? 0.6;
+  const aimSec = 0.15;
+  const holdSec = gatherSec + aimSec;
+  const fighter = ctx.fighters?.[event.attacker];
+  if (fighter) {
+    if (fighter.setIdleHold) {
+      fighter.setIdleHold("Meditate", holdSec);
+    }
+    if (fighter.playLoopClip) {
+      fighter.playLoopClip("Meditate");
+    }
+    ctx.scheduler.schedule(Math.max(0, holdSec), () => {
+      if (fighter.clearIdleHold) fighter.clearIdleHold();
+      if (fighter.playClip) fighter.playClip("Throw Object", Math.max(0.2, shootSec));
+    });
+  }
   if (typeof ctx.vfx.playFanTextSword === "function") {
     ctx.vfx.playFanTextSword({
       ownerIndex: event.attacker,
@@ -51,9 +66,9 @@ export function fanOnCast(ctx, event){
         swordRollDeg: 20,
         swordBackOffset: -20,
         swordUpOffset: 5.0,
-        swordShakeAmp: 0.04,
+        swordShakeAmp: 0.1,
         swordShakeFreq: 12.0,
-        swordShakeRot: 0.04,
+        swordShakeRot: 0.01,
       },
     });
     return true;

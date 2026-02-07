@@ -1,4 +1,5 @@
 // public/js/display/skills/BaseSkill.js
+import { SKILL_CATEGORY } from "../config";
 export class BaseSkill {
   def: any;
 
@@ -28,7 +29,13 @@ export class BaseSkill {
     combat.spendQi(attackerIndex, def.cost || 0);
     combat.setCd(attackerIndex, def.id, def.cd || 0);
 
-    if (def.anim) fighters[attackerIndex].playCast(def.anim);
+    if (def.anim) {
+      fighters[attackerIndex].playCast({
+        ...def.anim,
+        isSkill: def.category !== SKILL_CATEGORY.NORMAL,
+        skillId: def.id,
+      });
+    }
     return true;
   }
 }

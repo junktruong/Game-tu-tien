@@ -64,7 +64,7 @@ export default function HomeClient({ data }: HomeClientProps) {
   );
 
   const textureUrl =
-    activeSkin?.textureUrl ?? data.skins[0]?.textureUrl ?? '/img/stick_fighter_sheet.png';
+    activeSkin?.textureUrl ?? data.skins[0]?.textureUrl ?? '/skins/stick_skin.png';
 
   // =========================
   // ✅ INIT THREE PROFILE CANVAS
@@ -125,7 +125,7 @@ export default function HomeClient({ data }: HomeClientProps) {
       // 6) expose API đổi skin
       window.updateProfileSkin = (nextUrl: string) => {
         try {
-          fighter.setTexture(nextUrl || '/img/stick_fighter_sheet.png');
+          fighter.setTexture(nextUrl || '/skins/stick_skin.png');
         } catch (e) {
           console.error('updateProfileSkin failed:', e);
         }
@@ -197,7 +197,7 @@ export default function HomeClient({ data }: HomeClientProps) {
 
   // ✅ mỗi khi activeSkin đổi -> gọi updateProfileSkin
   useEffect(() => {
-    const url = textureUrl || '/img/stick_fighter_sheet.png';
+    const url = textureUrl || '/skins/stick_skin.png';
     if (window.updateProfileSkin) window.updateProfileSkin(url);
     else window.__pendingProfileTextureUrl = url;
   }, [textureUrl]);
@@ -214,7 +214,7 @@ export default function HomeClient({ data }: HomeClientProps) {
       body: JSON.stringify({ skinId }),
     });
 
-    const nextUrl = nextSkin.textureUrl || '/img/stick_fighter_sheet.png';
+    const nextUrl = nextSkin.textureUrl || '/skins/stick_skin.png';
     if (window.updateProfileSkin) window.updateProfileSkin(nextUrl);
     else window.__pendingProfileTextureUrl = nextUrl;
 
@@ -310,7 +310,7 @@ export default function HomeClient({ data }: HomeClientProps) {
           <div className="section-title">
             <div>
               <h2>Đổi skin</h2>
-              <p>Skin tuân theo quy tắc: mỗi skin sẽ nối tới một sprite sheet riêng.</p>
+              <p>Skin tuân theo quy tắc: mỗi skin là một texture PNG riêng.</p>
             </div>
             {skinStatus && <span className="hint-text">{skinStatus}</span>}
           </div>
@@ -331,7 +331,7 @@ export default function HomeClient({ data }: HomeClientProps) {
                   </div>
                 </div>
                 <span className="muted">
-                  {(skin.textureUrl || '/img/stick_fighter_sheet.png').replace('/img/', '')}
+                  {(skin.textureUrl || '/skins/stick_skin.png').replace('/skins/', '')}
                 </span>
               </button>
             ))}

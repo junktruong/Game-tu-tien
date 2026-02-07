@@ -9,6 +9,8 @@ import { GAME } from "./config";
 import type { GameEvent } from "./core/types";
 import { Scheduler } from "./utils";
 import { RenderRegistry } from "./render/RenderRegistry";
+import type { CameraCmd } from "./scene/CameraManager";
+import type { ArmPosePacket } from "../../shared/ArmPoseTypes";
 
 type DisplayInitOptions = {
   socketUrl?: string;
@@ -48,8 +50,18 @@ export const initDisplay = ({ socketUrl, io }: DisplayInitOptions) => {
 
   // fighters
   const fighters = [
-    new StickFighter(sceneManager.scene, { colorHex: 0x00ffff, x: -25, facing: 1, glowTex }),
-    new StickFighter(sceneManager.scene, { colorHex: 0xff4fd8, x: 25, facing: -1, glowTex }),
+    new StickFighter(sceneManager.scene, {
+      colorHex: 0x00ffff,
+      x: -25,
+      facing: 1,
+      swordFactory,
+    }),
+    new StickFighter(sceneManager.scene, {
+      colorHex: 0xff4fd8,
+      x: 25,
+      facing: -1,
+      swordFactory,
+    }),
   ];
 
   // vfx + combat
@@ -109,6 +121,9 @@ export const initDisplay = ({ socketUrl, io }: DisplayInitOptions) => {
   });
 
   socket.on("input", (msg: { player: number; gesture: string }) => {
+    const idx = msg?.player ? msg.player - 1 : 0;
+    const fighter = fighters[idx];
+    if (fighter?.setGesturePose) fighter.setGesturePose(msg.gesture);
     core.handleGesture(msg.player, msg.gesture);
   });
 
@@ -119,6 +134,17 @@ export const initDisplay = ({ socketUrl, io }: DisplayInitOptions) => {
 
   socket.on("disconnect", () => {
     hud.setStatus("⚠️ Disconnected");
+  });
+
+  socket.on("camera", (cmd: CameraCmd) => {
+    if (!cmd) return;
+    sceneManager.applyCameraCommand(cmd);
+  });
+
+  socket.on("arm_pose", (payload: ArmPosePacket) => {
+    const idx = payload?.player ? payload.player - 1 : 0;
+    const fighter = fighters[idx];
+    if (fighter?.setArmPose) fighter.setArmPose(payload);
   });
 
   // loop
@@ -141,7 +167,14 @@ export const initDisplay = ({ socketUrl, io }: DisplayInitOptions) => {
     for (const f of fighters) f.update(dt, elapsed);
     vfx.update(dt, elapsed, fighters);
 
-    sceneManager.update(dt);
+    const p1 = fighters[0]?.getCorePos(9.6);
+    const p2 = fighters[1]?.getCorePos(9.6);
+    const center = p1 && p2 ? p1.clone().lerp(p2, 0.5) : p1 || p2;
+    if (center) {
+      sceneManager.update(dt, { center, p1, p2 });
+    } else {
+      sceneManager.update(dt);
+    }
     sceneManager.render();
 
     rafId = requestAnimationFrame(loop);

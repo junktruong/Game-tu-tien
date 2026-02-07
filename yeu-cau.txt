@@ -1,0 +1,66 @@
+Engine / render hiện tại
+- Engine: Three.js (dùng trực tiếp, không phải r3f).
+- Renderer: WebGLRenderer + EffectComposer/UnrealBloomPass (postprocessing) cho màn display.
+- Có dùng Canvas 2D để tạo texture (glow 64x64, fan text 256x256), nhưng render chính là WebGL.
+
+Next.js
+- App Router (thư mục app/).
+
+Physics
+- Chưa có physics (không thấy Rapier/Cannon/Ammo).
+
+Nhân vật hiện tại
+- StickFighter: sprite sheet 2D gắn lên PlaneGeometry trong Three.
+
+Kích thước nhân vật
+- PlaneHeight = 15 world units.
+- PlaneWidth = 15 * (352/256) = 20.625 world units (tileW=2816/8=352, tileH=1536/6=256).
+- baseY = 7.5 (đặt chân chạm đất).
+
+Các state đang có
+- Actions: IDLE, ATTACK, SKILL, RUN, HEAVY_ATTACK, HURT.
+- Anim mode nội bộ: idle, cast, hit.
+
+Tốc độ chạy, nhảy, gravity, acceleration, friction
+- Không thấy định nghĩa tốc độ chạy/nhảy/gravity/accel/friction trong code.
+- Chỉ có tốc độ animation: tileDispDuration = 70ms/frame; hitBack=0.2s, hitRecover=0.4s, hitDist=3.0; các skill có anim timings (charge/swing/step/lean/ slashFrom/To) trong config.
+
+Input & camera
+- Input: nhận qua socket.io event `input` với `gesture` (ATTACK/SPIN/…); không có WASD local.
+- `aim` event hiện để placeholder.
+- Camera display: PerspectiveCamera FOV 55, pos (0,16,66), lookAt (0,10,0), có camera shake.
+- Camera profile preview (Home): FOV 45, pos (0,10,40), lookAt (0,10,0).
+- Không có FPS/TPS toggle, không có range pitch/yaw.
+
+WASD theo hướng nào?
+- Chưa có WASD trong code hiện tại.
+
+Bạn muốn camera: FPS/TPS back/TPS front (toggle bằng phím nào)
+- Hiện là camera cố định kiểu TPS-back (không toggle).
+
+Range pitch/yaw, FOV
+- Không có pitch/yaw range; FOV 55 (display) / 45 (profile preview).
+
+Skin / asset
+- Sprite sheet nhân vật: 2816x1536 (8x6 tiles), mặc định `/img/stick_fighter_sheet.png`.
+- Đang dùng atlas (sprite sheet), không phải 1 texture kiểu Minecraft.
+- Sword textures: `/img/swords/*.svg|png`, size phụ thuộc ảnh; aspect tự tính theo ảnh.
+- Glow texture: Canvas 64x64.
+- Fan text texture: Canvas 256x256.
+
+Model 3D
+- Chưa có model 3D/GLB; nhân vật là sprite 2D trên plane; sword dùng primitive hoặc texture plane.
+
+Format “thông số thiết lập”
+- Dùng file TS config (không thấy JSON):
+  - components/display/battlefield/config.ts (GAME, SKILLS)
+  - components/display/battlefield/scene/arenaConfig.ts (arena/lighting)
+
+File/đoạn code liên quan
+- components/display/battlefield/entities/StickFighter.ts
+- components/display/battlefield/scene/SceneManager.ts
+- components/display/battlefield/config.ts
+- components/display/battlefield/scene/arenaConfig.ts
+- components/display/battlefield/entities/SwordFactory.ts
+- components/display/battlefield/main.ts
+- components/home/HomeClient.tsx

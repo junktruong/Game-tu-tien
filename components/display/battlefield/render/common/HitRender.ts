@@ -11,7 +11,7 @@ export class HitRender implements RenderHandler {
 
     if (event.skillId === "ULT") {
       ctx.fighters[event.defender].setHitFlash(event.heavy ? 220 : 150);
-      ctx.fighters[event.defender].playHit(event.heavy);
+      ctx.fighters[event.defender].playHit(event.heavy, event.skillId);
       if (event.heavy) {
         const away = event.defender === 0 ? -1 : 1;
         ctx.vfx.spawnSlash(hitPos.clone().add(new window.THREE.Vector3(away * 0.6, 0, 0)), col, away * 0.35);
@@ -23,7 +23,7 @@ export class HitRender implements RenderHandler {
     }
 
     ctx.fighters[event.defender].setHitFlash(event.heavy ? 260 : 170);
-    ctx.fighters[event.defender].playHit(event.heavy);
+    ctx.fighters[event.defender].playHit(event.heavy, event.skillId);
     ctx.vfx.spawnBurstAt(hitPos, col, event.heavy ? 1.25 : 0.95);
     const away = event.defender === 0 ? -1 : 1;
     ctx.vfx.spawnSlash(hitPos.clone().add(new window.THREE.Vector3(away * 0.8, 0, 0)), col, away * 0.35);

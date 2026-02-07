@@ -15,7 +15,16 @@ export class ShakaSkill extends BaseSkill {
       combat.players[attacker].ult = 0;
       combat.setCd(attacker, "ULT", meta.ultCd || 10.0);
 
-      fighters[attacker].playCast({ charge:0.26, swing:0.34, step:0.65, lean:0.10, slashFrom:0.35, slashTo:0.35 });
+      fighters[attacker].playCast({
+        charge: 0.26,
+        swing: 0.34,
+        step: 0.65,
+        lean: 0.10,
+        slashFrom: 0.35,
+        slashTo: 0.35,
+        isSkill: true,
+        skillId: "ULT",
+      });
       combat.setLastSkill(attacker, "Song Long Quá Hải");
       hud.setBanner(`🐉 P${attacker+1}: SONG LONG QUÁ HẢI!!!`);
 

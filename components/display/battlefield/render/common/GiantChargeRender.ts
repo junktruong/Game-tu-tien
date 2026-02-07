@@ -4,6 +4,12 @@ import type { RenderContext, RenderHandler } from "../types";
 export class GiantChargeRender implements RenderHandler {
   handle(event: GameEvent, ctx: RenderContext) {
     if (event.type === "GIANT_CHARGE_START") {
+      if (ctx.fighters?.[event.attacker]?.setIdleHold) {
+        ctx.fighters[event.attacker].setIdleHold("Levitate Entrance");
+      }
+      if (ctx.fighters?.[event.attacker]?.playLoopClip) {
+        ctx.fighters[event.attacker].playLoopClip("Levitate Entrance");
+      }
       if (typeof ctx.vfx.startGiantCharge === "function") {
         ctx.vfx.startGiantCharge(ctx.fighters[event.attacker], ctx.core.getColor(event.attacker), event.attacker, {
           ringEverySec: 0.7,
@@ -21,6 +27,12 @@ export class GiantChargeRender implements RenderHandler {
     }
 
     if (event.type === "GIANT_CHARGE_STOP") {
+      if (ctx.fighters?.[event.attacker]?.setIdleHold) {
+        ctx.fighters[event.attacker].setIdleHold("Levitate Entrance", 0.6);
+      }
+      if (ctx.fighters?.[event.attacker]?.playLoopClip) {
+        ctx.fighters[event.attacker].playLoopClip("Levitate Entrance");
+      }
       if (ctx.vfx?.projectiles) {
         ctx.vfx.projectiles.push({
           __delayedStopGiant: true,

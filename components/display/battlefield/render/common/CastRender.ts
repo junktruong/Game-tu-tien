@@ -1,4 +1,4 @@
-import { SKILLS } from "../../config";
+import { SKILLS, SKILL_CATEGORY } from "../../config";
 import type { GameEvent } from "../../core/types";
 import type { RenderContext, RenderHandler } from "../types";
 
@@ -8,7 +8,12 @@ export class CastRender implements RenderHandler {
 
     const def = SKILLS[event.skillId] ?? null;
     if (def?.anim) {
-      ctx.fighters[event.attacker].playCast(def.anim);
+      const isSkill = def.category !== SKILL_CATEGORY.NORMAL;
+      ctx.fighters[event.attacker].playCast({
+        ...def.anim,
+        isSkill,
+        skillId: event.skillId,
+      });
       return false;
     }
 
@@ -20,6 +25,7 @@ export class CastRender implements RenderHandler {
         lean: 0.1,
         slashFrom: 0.35,
         slashTo: 0.35,
+        skillId: "ULT",
       });
     }
 

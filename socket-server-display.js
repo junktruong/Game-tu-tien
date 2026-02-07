@@ -3,7 +3,7 @@ const http = require("http");
 const express = require("express");
 const { Server } = require("socket.io");
 
-const PORT = process.env.PORT || 3333;
+const PORT = process.env.PORT || 3344;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:3000";
 
 const app = express();
@@ -280,5 +280,5 @@ io.on("connection", (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`✅ Server running: http://localhost:${PORT}`);
+  console.log(`✅ Display+Control server running: http://localhost:${PORT}`);
 });

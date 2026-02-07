@@ -1,4 +1,17 @@
 import { io } from 'socket.io-client';
+import {
+  buildCalibration,
+  clamp01,
+  poseQuatFromDirs,
+  quatSlerp,
+  vec3Normalize,
+} from '@/components/shared/ArmPoseTypes';
+import type {
+  ArmCalibration,
+  ArmPosePacket,
+  QuatArray,
+  Vec3,
+} from '@/components/shared/ArmPoseTypes';
 
 export function initControl({ socketUrl }: { socketUrl: string }) {
   const active = { current: true };
@@ -10,6 +23,8 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
 
   const loadingEl = $("loading");
   const startBtn = $("startBtn");
+  const controlPanel = $("control-panel");
+  const toggleControls = $("toggleControls") as HTMLButtonElement | null;
 
   const isLocalhost =
     location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -32,6 +47,23 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   const roomInput = $("roomInput") as HTMLInputElement | null;
   const playerSelect = $("playerSelect") as HTMLSelectElement | null;
   const joinBtn = $("joinBtn");
+  const calibrateBtn = $("calibrateBtn") as HTMLButtonElement | null;
+  const mirrorToggle = $("mirrorToggle") as HTMLInputElement | null;
+  const debugToggle = $("debugToggle") as HTMLInputElement | null;
+  const armPoseToggle = $("armGestureToggle") as HTMLInputElement | null;
+  const poseCanvas = $("poseDebug") as HTMLCanvasElement | null;
+  const poseCtx = poseCanvas?.getContext("2d") || null;
+
+  const cameraMode = $("cameraMode") as HTMLSelectElement | null;
+  const cameraTarget = $("cameraTarget") as HTMLSelectElement | null;
+  const cameraYaw = $("cameraYaw") as HTMLInputElement | null;
+  const cameraPitch = $("cameraPitch") as HTMLInputElement | null;
+  const cameraDist = $("cameraDist") as HTMLInputElement | null;
+  const cameraFov = $("cameraFov") as HTMLInputElement | null;
+  const cameraYawValue = $("cameraYawValue");
+  const cameraPitchValue = $("cameraPitchValue");
+  const cameraDistValue = $("cameraDistValue");
+  const cameraFovValue = $("cameraFovValue");
 
   const skillNameEl = $("skill-name");
   function showSkillName(name: string) {
@@ -46,12 +78,41 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   }
 
   const video = document.querySelector<HTMLVideoElement>(".input_video");
+  const previewVideo = $("cameraPreview") as HTMLVideoElement | null;
   if (!video) {
     return () => {};
   }
   video.setAttribute("playsinline", "");
   video.muted = true;
   video.autoplay = true;
+  if (previewVideo) {
+    previewVideo.setAttribute("playsinline", "");
+    previewVideo.muted = true;
+    previewVideo.autoplay = true;
+  }
+
+  let mirrorOn = mirrorToggle?.checked ?? true;
+  let debugOn = debugToggle?.checked ?? false;
+  let armPoseEnabled = armPoseToggle?.checked ?? false;
+  let toggleHandler: (() => void) | null = null;
+
+  if (poseCanvas) {
+    poseCanvas.style.display = debugOn ? "block" : "none";
+  }
+
+  const setLabel = (el: Element | null, value: string) => {
+    if (!el) return;
+    el.textContent = value;
+  };
+
+  const updateCameraLabels = () => {
+    if (cameraYaw) setLabel(cameraYawValue, cameraYaw.value);
+    if (cameraPitch) setLabel(cameraPitchValue, cameraPitch.value);
+    if (cameraDist) setLabel(cameraDistValue, cameraDist.value);
+    if (cameraFov) setLabel(cameraFovValue, cameraFov.value);
+  };
+
+  updateCameraLabels();
 
   // =========================
   // Socket (join / input / aim)
@@ -68,6 +129,30 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   let ROOM = roomInput?.value.trim() || "demo";
   let PLAYER = Number(playerSelect?.value) === 2 ? 2 : 1;
   let joinedOk = false;
+  let lastCameraSentAt = 0;
+
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+  const emitCameraCommand = (force = false) => {
+    if (!socket || !socket.connected || !joinedOk) return;
+    const now = performance.now();
+    if (!force && now - lastCameraSentAt < 120) return;
+    lastCameraSentAt = now;
+
+    const yawDeg = Number(cameraYaw?.value ?? 0) || 0;
+    const pitchDeg = Number(cameraPitch?.value ?? 10) || 0;
+    const distVal = Number(cameraDist?.value ?? 44) || 44;
+    const fovVal = Number(cameraFov?.value ?? 50) || 50;
+
+    socket.emit("camera", {
+      mode: cameraMode?.value || "TPS_BACK",
+      target: cameraTarget?.value || "center",
+      yaw: toRad(yawDeg),
+      pitch: toRad(pitchDeg),
+      dist: distVal,
+      fov: fovVal,
+    });
+  };
 
   function setNet(s: string) {
     if (netText) netText.textContent = s;
@@ -90,6 +175,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       socket.on("joined", (info) => {
         joinedOk = true;
         setNet(`🟢 Joined room=${info.room} | Player ${info.player}`);
+        emitCameraCommand(true);
       });
 
       socket.on("roster", (r) => {
@@ -118,6 +204,106 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   const joinHandler = () => connectAndJoin();
   joinBtn?.addEventListener("click", joinHandler);
   connectAndJoin();
+
+  const cameraInputs: (HTMLInputElement | HTMLSelectElement | null)[] = [
+    cameraMode,
+    cameraTarget,
+    cameraYaw,
+    cameraPitch,
+    cameraDist,
+    cameraFov,
+  ];
+  const onCameraInput = () => {
+    updateCameraLabels();
+    emitCameraCommand();
+  };
+  for (const el of cameraInputs) {
+    if (!el) continue;
+    el.addEventListener("input", onCameraInput);
+    el.addEventListener("change", onCameraInput);
+  }
+
+  const onMirrorChange = () => {
+    mirrorOn = mirrorToggle?.checked ?? true;
+    if (previewVideo) {
+      previewVideo.classList.toggle("mirror", mirrorOn);
+    }
+  };
+
+  const onDebugChange = () => {
+    debugOn = debugToggle?.checked ?? false;
+    if (poseCanvas) {
+      poseCanvas.style.display = debugOn ? "block" : "none";
+    }
+  };
+
+  const onArmPoseChange = () => {
+    armPoseEnabled = armPoseToggle?.checked ?? false;
+    if (armPoseEnabled) {
+      initPoseLandmarker();
+      return;
+    }
+    if (poseLandmarker?.close) {
+      try {
+        poseLandmarker.close();
+      } catch (_) {
+        // ignore
+      }
+      poseLandmarker = null;
+      poseReady = false;
+    }
+    sendArmPose({
+      t: performance.now(),
+      calibrated: poseCalibrated,
+      confidence: { right: 0, left: 0 },
+    });
+  };
+
+  const onCalibrateClick = () => {
+    if (lastPoseSample) {
+      poseCalibration = buildCalibration(lastPoseSample);
+      poseCalibrated = true;
+      pendingCalibration = false;
+      showSkillName("Calibrated");
+    } else {
+      pendingCalibration = true;
+      showSkillName("Hold pose...");
+    }
+  };
+
+  if (mirrorToggle) mirrorToggle.addEventListener("change", onMirrorChange);
+  if (debugToggle) debugToggle.addEventListener("change", onDebugChange);
+  if (armPoseToggle) armPoseToggle.addEventListener("change", onArmPoseChange);
+  if (calibrateBtn) calibrateBtn.addEventListener("click", onCalibrateClick);
+
+  if (previewVideo) {
+    previewVideo.classList.toggle("mirror", mirrorOn);
+  }
+
+  if (toggleControls && controlPanel) {
+    const applyCollapsed = (collapsed: boolean) => {
+      controlPanel.classList.toggle("collapsed", collapsed);
+      toggleControls.textContent = collapsed ? "Mở" : "Thu gọn";
+    };
+    let collapsed = false;
+    try {
+      collapsed = localStorage.getItem("controlPanelCollapsed") === "1";
+    } catch (_) {
+      // ignore
+    }
+    applyCollapsed(collapsed);
+    const onToggle = () => {
+      collapsed = !collapsed;
+      applyCollapsed(collapsed);
+      try {
+        localStorage.setItem("controlPanelCollapsed", collapsed ? "1" : "0");
+      } catch (_) {
+        // ignore
+      }
+    };
+    toggleControls.addEventListener("click", onToggle);
+    toggleHandler = onToggle;
+  }
 
   // =========================
   // Gestures + Names
@@ -149,25 +335,97 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   };
 
   // =========================
-  // MediaPipe Hands
+  // MediaPipe Tasks Vision
   // =========================
-  const handsClass = (window as any).Hands;
-  if (!handsClass) {
-    loadingEl.style.display = "block";
-    loadingEl.innerHTML = "Thiếu MediaPipe Hands (hands.js chưa load).";
-    return () => {};
+  const TASKS_VISION_VERSION = "0.10.32";
+  const VISION_WASM_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${TASKS_VISION_VERSION}/wasm`;
+
+  let visionPromise:
+    | Promise<{ vision: any; resolver: any }>
+    | null = null;
+
+  async function loadVision() {
+    if (visionPromise) return visionPromise;
+    visionPromise = (async () => {
+      const vision = await import("@mediapipe/tasks-vision");
+      const resolver = await vision.FilesetResolver.forVisionTasks(VISION_WASM_BASE);
+      return { vision, resolver };
+    })();
+    return visionPromise;
   }
 
-  const hands = new handsClass({
-    locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-  });
+  let handLandmarker: any = null;
+  let handsReady = false;
 
-  hands.setOptions({
-    maxNumHands: 2,
-    modelComplexity: 1,
-    minDetectionConfidence: 0.65,
-    minTrackingConfidence: 0.65,
-  });
+  // =========================
+  // Pose Landmarker (Arm tracking)
+  // =========================
+  const POSE_SEND_HZ = 25;
+  const POSE_SEND_MS = 1000 / POSE_SEND_HZ;
+  const POSE_LOST_MS = 520;
+  const DEFAULT_REST: Vec3 = { x: 0, y: -1, z: 0 };
+
+  let poseLandmarker: any = null;
+  let poseReady = false;
+  let poseBusy = false;
+  let lastPoseSentAt = 0;
+  let lastPoseSeenAt = 0;
+  let poseCalibration: ArmCalibration | null = null;
+  let poseCalibrated = false;
+  let pendingCalibration = false;
+  let lastPoseSample: ArmCalibration | null = null;
+
+  let smoothRightUpper: QuatArray | null = null;
+  let smoothRightLower: QuatArray | null = null;
+  let smoothLeftUpper: QuatArray | null = null;
+  let smoothLeftLower: QuatArray | null = null;
+
+  async function initHandLandmarker() {
+    if (handsReady || handLandmarker) return;
+    try {
+      const { vision, resolver } = await loadVision();
+      handLandmarker = await vision.HandLandmarker.createFromOptions(resolver, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task",
+        },
+        runningMode: "VIDEO",
+        numHands: 2,
+        minHandDetectionConfidence: 0.65,
+        minHandPresenceConfidence: 0.65,
+        minTrackingConfidence: 0.65,
+      });
+      handsReady = true;
+    } catch (err) {
+      console.warn("HandLandmarker init failed:", err);
+      loadingEl.style.display = "block";
+      loadingEl.innerHTML =
+        "Không tải được model nhận diện tay.<br/>" +
+        "Hãy kiểm tra kết nối mạng hoặc CDN bị chặn.";
+      startBtn.style.display = "block";
+    }
+  }
+
+  async function initPoseLandmarker() {
+    if (poseReady || poseLandmarker) return;
+    try {
+      const { vision, resolver } = await loadVision();
+      poseLandmarker = await vision.PoseLandmarker.createFromOptions(resolver, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task",
+        },
+        runningMode: "VIDEO",
+        numPoses: 1,
+        minPoseDetectionConfidence: 0.55,
+        minPosePresenceConfidence: 0.55,
+        minTrackingConfidence: 0.55,
+      });
+      poseReady = true;
+    } catch (err) {
+      console.warn("PoseLandmarker init failed:", err);
+    }
+  }
 
   // =========================
   // Geometry helpers (stable)
@@ -275,9 +533,34 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   // =========================
   // Hand assignment (Left/Right)
   // =========================
+  function normalizeHandResults(results: any) {
+    if (!results) return { lms: [], handed: [] };
+    if (results.multiHandLandmarks) {
+      return {
+        lms: results.multiHandLandmarks || [],
+        handed: results.multiHandedness || [],
+      };
+    }
+
+    const lms = results.landmarks || [];
+    const handednesses = results.handednesses || results.handedness || [];
+    const handed = handednesses.map((entry: any) => {
+      const item = Array.isArray(entry) ? entry[0] : entry;
+      const raw =
+        item?.categoryName ||
+        item?.displayName ||
+        item?.label ||
+        item?.name ||
+        "";
+      const norm = typeof raw === "string" ? raw.toLowerCase() : "";
+      const label = norm === "left" ? "Left" : norm === "right" ? "Right" : raw;
+      return label ? { label } : null;
+    });
+    return { lms, handed };
+  }
+
   function assignLR(results: any) {
-    const lms = results.multiHandLandmarks || [];
-    const handed = results.multiHandedness || [];
+    const { lms, handed } = normalizeHandResults(results);
 
     let L: any = null,
       R: any = null;
@@ -312,6 +595,152 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   }
 
   // =========================
+  // Pose helpers (arm tracking)
+  // =========================
+  const POSE_INDEX = {
+    left: { shoulder: 11, elbow: 13, wrist: 15 },
+    right: { shoulder: 12, elbow: 14, wrist: 16 },
+  };
+
+  function readPoseLandmark(landmarks: any[], idx: number) {
+    const lm = landmarks?.[idx];
+    if (!lm) return null;
+    const x = mirrorOn ? -lm.x : lm.x;
+    const y = lm.y;
+    const z = lm.z ?? 0;
+    const visibility = clamp01(Number(lm.visibility ?? lm.presence ?? 1));
+    return { x, y, z, visibility };
+  }
+
+  function extractArmDirs(landmarks: any[], side: "left" | "right") {
+    const idx = POSE_INDEX[side];
+    const s = readPoseLandmark(landmarks, idx.shoulder);
+    const e = readPoseLandmark(landmarks, idx.elbow);
+    const w = readPoseLandmark(landmarks, idx.wrist);
+    if (!s || !e || !w) return null;
+    const upper = vec3Normalize({ x: e.x - s.x, y: e.y - s.y, z: e.z - s.z });
+    const lower = vec3Normalize({ x: w.x - e.x, y: w.y - e.y, z: w.z - e.z });
+    const confidence = clamp01((s.visibility + e.visibility + w.visibility) / 3);
+    return { upper, lower, confidence };
+  }
+
+  function smoothQuat(current: QuatArray | null, next: QuatArray, alpha: number) {
+    return current ? quatSlerp(current, next, alpha) : next;
+  }
+
+  function drawPoseDebug(landmarks: any[] | null) {
+    if (!poseCtx || !poseCanvas || !debugOn) return;
+    const w = poseCanvas.width;
+    const h = poseCanvas.height;
+    poseCtx.clearRect(0, 0, w, h);
+    if (!landmarks) return;
+
+    const mapPoint = (lm: any) => {
+      const x = mirrorOn ? (1 - lm.x) * w : lm.x * w;
+      const y = lm.y * h;
+      return { x, y };
+    };
+
+    const drawLine = (aIdx: number, bIdx: number, color: string) => {
+      const a = landmarks[aIdx];
+      const b = landmarks[bIdx];
+      if (!a || !b) return;
+      const pa = mapPoint(a);
+      const pb = mapPoint(b);
+      poseCtx.strokeStyle = color;
+      poseCtx.lineWidth = 3;
+      poseCtx.beginPath();
+      poseCtx.moveTo(pa.x, pa.y);
+      poseCtx.lineTo(pb.x, pb.y);
+      poseCtx.stroke();
+    };
+
+    const drawPoint = (idx: number, color: string) => {
+      const lm = landmarks[idx];
+      if (!lm) return;
+      const p = mapPoint(lm);
+      poseCtx.fillStyle = color;
+      poseCtx.beginPath();
+      poseCtx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      poseCtx.fill();
+    };
+
+    drawLine(POSE_INDEX.right.shoulder, POSE_INDEX.right.elbow, "#00ffff");
+    drawLine(POSE_INDEX.right.elbow, POSE_INDEX.right.wrist, "#00ffff");
+    drawLine(POSE_INDEX.left.shoulder, POSE_INDEX.left.elbow, "#ff4fd8");
+    drawLine(POSE_INDEX.left.elbow, POSE_INDEX.left.wrist, "#ff4fd8");
+
+    drawPoint(POSE_INDEX.right.shoulder, "#00ffff");
+    drawPoint(POSE_INDEX.right.elbow, "#00ffff");
+    drawPoint(POSE_INDEX.right.wrist, "#00ffff");
+    drawPoint(POSE_INDEX.left.shoulder, "#ff4fd8");
+    drawPoint(POSE_INDEX.left.elbow, "#ff4fd8");
+    drawPoint(POSE_INDEX.left.wrist, "#ff4fd8");
+  }
+
+  function buildPosePacket(worldLandmarks: any[], nowMs: number): ArmPosePacket | null {
+    const rightKey = mirrorOn ? "left" : "right";
+    const leftKey = mirrorOn ? "right" : "left";
+
+    const rightDirs = extractArmDirs(worldLandmarks, rightKey as "left" | "right");
+    const leftDirs = extractArmDirs(worldLandmarks, leftKey as "left" | "right");
+
+    if (!rightDirs && !leftDirs) return null;
+
+    lastPoseSample = {
+      right: rightDirs ? { upper: rightDirs.upper, lower: rightDirs.lower } : undefined,
+      left: leftDirs ? { upper: leftDirs.upper, lower: leftDirs.lower } : undefined,
+    };
+
+    if (pendingCalibration && lastPoseSample) {
+      poseCalibration = buildCalibration(lastPoseSample);
+      poseCalibrated = true;
+      pendingCalibration = false;
+      showSkillName("Calibrated");
+    }
+
+    const dt = lastPoseSeenAt ? (nowMs - lastPoseSeenAt) / 1000 : 1 / POSE_SEND_HZ;
+    const alpha = clamp01(dt * 8);
+    lastPoseSeenAt = nowMs;
+
+    const packet: ArmPosePacket = { t: nowMs, calibrated: poseCalibrated, confidence: {} };
+
+    if (rightDirs) {
+      const restUpper = poseCalibration?.right?.upper ?? DEFAULT_REST;
+      const restLower = poseCalibration?.right?.lower ?? DEFAULT_REST;
+      const qUpper = poseQuatFromDirs(rightDirs.upper, restUpper);
+      const qLower = poseQuatFromDirs(rightDirs.lower, restLower);
+      smoothRightUpper = smoothQuat(smoothRightUpper, qUpper, alpha);
+      smoothRightLower = smoothQuat(smoothRightLower, qLower, alpha);
+      if (smoothRightUpper && smoothRightLower) {
+        packet.right = { upper: smoothRightUpper, lower: smoothRightLower };
+      }
+      packet.confidence!.right = rightDirs.confidence;
+    }
+
+    if (leftDirs) {
+      const restUpper = poseCalibration?.left?.upper ?? DEFAULT_REST;
+      const restLower = poseCalibration?.left?.lower ?? DEFAULT_REST;
+      const qUpper = poseQuatFromDirs(leftDirs.upper, restUpper);
+      const qLower = poseQuatFromDirs(leftDirs.lower, restLower);
+      smoothLeftUpper = smoothQuat(smoothLeftUpper, qUpper, alpha);
+      smoothLeftLower = smoothQuat(smoothLeftLower, qLower, alpha);
+      if (smoothLeftUpper && smoothLeftLower) {
+        packet.left = { upper: smoothLeftUpper, lower: smoothLeftLower };
+      }
+      packet.confidence!.left = leftDirs.confidence;
+    }
+
+    return packet;
+  }
+
+  function sendArmPose(packet: ArmPosePacket) {
+    if (!socket || !socket.connected || !joinedOk) return;
+    const msg: ArmPosePacket = { ...packet, player: PLAYER };
+    socket.emit("arm_pose", msg);
+  }
+
+  // =========================
   // Aim direction
   // =========================
   function computeAimDir(preferLm: any) {
@@ -332,7 +761,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   const STABLE_MS = 140;
   const LOST_MS = 220;
 
-  function makeStab() {
+  function makeStab(stableMs = STABLE_MS, lostMs = LOST_MS) {
     return {
       cand: GESTURE.IDLE,
       candSince: 0,
@@ -344,14 +773,14 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
           this.cand = g;
           this.candSince = now;
         }
-        if (this.stable !== this.cand && now - this.candSince >= STABLE_MS) {
+        if (this.stable !== this.cand && now - this.candSince >= stableMs) {
           this.stable = this.cand;
           return true;
         }
         return false;
       },
       decay(now: number) {
-        if (now - this.lastSeen > LOST_MS) {
+        if (now - this.lastSeen > lostMs) {
           this.cand = GESTURE.IDLE;
           this.stable = GESTURE.IDLE;
           this.candSince = now;
@@ -509,11 +938,12 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
     // không spam cùng gesture (trừ POINT vì aim cần mượt)
     if (g === lastCommittedGesture && g !== GESTURE.POINT) return;
 
-    // nếu IDLE thì chỉ stop aim + UI, không gửi input (giống behavior cũ khi mất tay)
+    // nếu IDLE thì stop aim + UI, và gửi 1 lần để reset pose ở display
     if (g === GESTURE.IDLE) {
       if (lastCommittedGesture === GESTURE.POINT) stopAimStream();
       lastCommittedGesture = GESTURE.IDLE;
       lastGestureChangeAt = now;
+      sendInput(GESTURE.IDLE, aimLm);
       return;
     }
 
@@ -538,7 +968,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   // =========================
   let gotFirstResults = false;
 
-  hands.onResults((results: any) => {
+  function handleHandResults(results: any) {
     if (!active.current) return;
     if (!gotFirstResults) {
       gotFirstResults = true;
@@ -603,12 +1033,13 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       // nếu đang POINT thì update aimLmRef để aim stream dùng tay đúng
       if (lastCommittedGesture === GESTURE.POINT) aimLmRef = aimLm;
     }
-  });
+  }
 
   // =========================
   // Camera start + loop
   // =========================
   let streamRef: MediaStream | null = null;
+  let poseRaf = 0;
 
   async function startCameraManually() {
     try {
@@ -632,8 +1063,26 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       streamRef = stream;
       video.srcObject = stream;
       await video.play();
+      if (previewVideo) {
+        previewVideo.srcObject = stream;
+        try {
+          await previewVideo.play();
+        } catch (_) {
+          // ignore autoplay issues
+        }
+        previewVideo.style.display = "block";
+      }
 
-      loadingEl.innerHTML = "Đang nhận diện bàn tay...";
+      loadingEl.innerHTML = "Đang nhận diện cử chỉ...";
+      initHandLandmarker();
+      if (armPoseEnabled) {
+        initPoseLandmarker();
+      }
+
+      if (poseCanvas) {
+        poseCanvas.width = video.videoWidth || 640;
+        poseCanvas.height = video.videoHeight || 480;
+      }
 
       let busy = false;
       async function frameLoop() {
@@ -641,7 +1090,11 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
           if (!active.current) return;
           if (!busy && video.readyState >= 2) {
             busy = true;
-            await hands.send({ image: video });
+            if (handsReady && handLandmarker) {
+              const nowMs = performance.now();
+              const results = handLandmarker.detectForVideo(video, nowMs);
+              handleHandResults(results);
+            }
             busy = false;
           }
         } catch (e) {
@@ -650,6 +1103,52 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
         requestAnimationFrame(frameLoop);
       }
       frameLoop();
+
+      const poseLoop = () => {
+        if (!active.current) return;
+        if (!armPoseEnabled) {
+          poseRaf = requestAnimationFrame(poseLoop);
+          return;
+        }
+        if (poseReady && poseLandmarker && video.readyState >= 2 && !poseBusy) {
+          poseBusy = true;
+          try {
+            const nowMs = performance.now();
+            if (!debugOn && nowMs - lastPoseSentAt < POSE_SEND_MS) {
+              poseBusy = false;
+              poseRaf = requestAnimationFrame(poseLoop);
+              return;
+            }
+            const result = poseLandmarker.detectForVideo(video, nowMs);
+            const world = result?.worldLandmarks?.[0] || result?.landmarks?.[0] || null;
+            const screen = result?.landmarks?.[0] || null;
+            drawPoseDebug(screen);
+
+            if (world) {
+              const packet = buildPosePacket(world, nowMs);
+              if (packet && nowMs - lastPoseSentAt >= POSE_SEND_MS) {
+                lastPoseSentAt = nowMs;
+                sendArmPose(packet);
+              }
+            } else if (nowMs - lastPoseSeenAt > POSE_LOST_MS) {
+              if (nowMs - lastPoseSentAt >= POSE_SEND_MS) {
+                lastPoseSentAt = nowMs;
+                sendArmPose({
+                  t: nowMs,
+                  calibrated: poseCalibrated,
+                  confidence: { right: 0, left: 0 },
+                });
+              }
+            }
+          } catch (_) {
+            // ignore pose errors per frame
+          } finally {
+            poseBusy = false;
+          }
+        }
+        poseRaf = requestAnimationFrame(poseLoop);
+      };
+      poseLoop();
     } catch (err: any) {
       let msg = "Không mở được camera. ";
       if (err.name === "NotAllowedError") msg += "Bạn đã chặn quyền camera.";
@@ -694,6 +1193,18 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
     joinBtn?.removeEventListener("click", joinHandler);
     startBtn?.removeEventListener("click", startHandler);
     removeEventListener("keydown", keyHandler);
+    for (const el of cameraInputs) {
+      if (!el) continue;
+      el.removeEventListener("input", onCameraInput);
+      el.removeEventListener("change", onCameraInput);
+    }
+    mirrorToggle?.removeEventListener("change", onMirrorChange);
+    debugToggle?.removeEventListener("change", onDebugChange);
+    armPoseToggle?.removeEventListener("change", onArmPoseChange);
+    calibrateBtn?.removeEventListener("click", onCalibrateClick);
+    if (toggleControls && toggleHandler) {
+      toggleControls.removeEventListener("click", toggleHandler);
+    }
 
     if (aimTimer) {
       clearInterval(aimTimer);
@@ -706,9 +1217,22 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       socket = null;
     }
 
-    if (hands?.close) {
+    if (handLandmarker?.close) {
       try {
-        hands.close();
+        handLandmarker.close();
+      } catch (_) {
+        // ignore
+      }
+    }
+
+    if (poseRaf) {
+      cancelAnimationFrame(poseRaf);
+      poseRaf = 0;
+    }
+
+    if (poseLandmarker?.close) {
+      try {
+        poseLandmarker.close();
       } catch (_) {
         // ignore
       }
@@ -719,6 +1243,15 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
         track.stop();
       }
       streamRef = null;
+    }
+    if (previewVideo) {
+      try {
+        previewVideo.pause();
+      } catch (_) {
+        // ignore
+      }
+      previewVideo.srcObject = null;
+      previewVideo.style.display = "none";
     }
   };
 }

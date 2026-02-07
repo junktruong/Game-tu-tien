@@ -71,3 +71,107 @@ Original prompt: đọc lại toàn bộ code liên quan tới control.html ki�
 - 2026-02-05: FAN sword gather now shakes strongly (position + rotation jitter) while forming; added swordShakeAmp/Freq/Rot options and tuned FAN defaults.
 
 - 2026-02-05: Reduced FAN sword shake distance/rotation (swordShakeAmp 0.08, swordShakeRot 0.08).
+
+- 2026-02-05: Migrated StickFighter to low-poly 3D: added GLB + PNG skin textures, new procedural animation state machine (idle/run/cast/hurt), sword attachment to RightHand anchor, and updated skin defaults/UI copy to PNG skins. Added GLB generator script for future tweaks. NOTE: Playwright validation not run (Playwright still missing, no dev server URL).
+- 2026-02-05: Added CameraManager (multi-mode camera + smoothing) and socket camera commands; SceneManager now delegates camera updates. Implemented ArmPoseTypes and arm_pose pipeline: controller uses MediaPipe Tasks Vision PoseLandmarker with calibration/mirror/debug UI, sends arm_pose at ~25Hz; display applies arm pose to StickFighter arms with blending. Added socket-server relays for camera/arm_pose. Added @mediapipe/tasks-vision dependency. Tests not run (Playwright missing).
+- 2026-02-05: Merged control UI into Display page (camera/arm tracking panel + debug canvas + hands.js script). Display now boots initControl locally so camera changes and arm pose are applied without separate /control page. Updated display CSS for control panel.
+- 2026-02-05: Added arm-gesture mode (raise/forward/forward-bent/rest) using PoseLandmarker; added Arm Gesture toggle; hand gestures are skipped when arm mode is on. Pose loop now drives gesture detection; hands.js wait removed earlier.
+- 2026-02-05: Playwright run failed again: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Playwright run still failing (missing playwright) after arm-gesture tweak.
+- 2026-02-05: Updated MediaPipe model URLs to official mediapipe-models bucket (pose_landmarker_full + hand_landmarker) to fix 404.
+- 2026-02-05: Added camera preview overlay + control panel collapse button (Display). Arm Gesture mode now disables arm_pose sending and sends zero-confidence once to avoid jitter; preview mirrors with Mirror toggle.
+- 2026-02-05: Suppressed hydration warning on <html> to silence extension-injected class (mdl-js) mismatch.
+- 2026-02-05: Playwright run failed again: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Disabled arm-gesture detection; arm pose is now optional (toggle off by default). Hand gestures always active and now drive simple arm pose presets on the fighter; IDLE gesture is sent once to reset pose. Fighters now face each other via Y-rotation instead of X-scale flip.
+- 2026-02-05: Playwright run failed again: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Adjusted fighter facing: rotate Y by ±90° (assuming model forward +Z) so fighters face each other across X axis.
+- 2026-02-05: Clarified character skin image handling in StickFighter by adding resolveTextureUrl and using it for initial load + setTexture (consistent default + trim). Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Updated StickFighter to use smooth shading and rounded procedural geometry (capsule/cylinder/sphere) for fallback. Enabled character shadows by setting castShadow on meshes. SceneManager now enables soft shadows on renderer/ground and configures key light shadow map. Regenerated `public/models/stick_fighter.glb` using capsule/cylinder/sphere geometry in `scripts/gen_stick_fighter_glb.mjs` to reduce blocky/Minecraft look.
+- 2026-02-05: Switched default fighter model to /models/model01.glb. Added skinnable model allowlist (only stick_fighter.glb uses skin material). Custom models keep their own materials and still get shadows. Added fallback hand anchor using bounding box when no RightHand bone. Added hasRigParts flag and whole-body tilt/bob when model has no named parts. Inspected model01.glb: single node, no skins/bones.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Increased fighter scale (DEFAULT_MODEL_SCALE=1.3), shrunk arena ground/ring (45 radius, ring 26-28), and zoomed camera defaults (dist 44, fov 50). Updated Display/Control UI defaults and ControlClient fallback values. Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Increased DEFAULT_MODEL_SCALE to 26 (20x larger than previous 1.3) per request.
+- 2026-02-05: Added modelYOffset auto-ground alignment using bounding box. Group Y now adds modelYOffset. Added stronger hit reaction for models without rig parts (increased hit knockback and added hit lean on rotation.x).
+- 2026-02-05: Added per-model forward-axis mapping so fighters face each other along X axis (model01 uses X-forward, stick_fighter uses Z-forward). Stored baseRotY and applied in constructor.
+- 2026-02-05: Switched default model to /models/model02.glb and added forward-axis mapping for model02 (Z-forward). Added skinned-mesh detection and warning when bones exist without skin weights.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Inspected model02.glb after re-export: Skins=1 (good), Animations=0, bones named Bone.* / neutral_bone (no Torso/ArmL/etc), so current bindParts won't pick them without renaming or mapping.
+- 2026-02-05: Added flexible bone name lookup in StickFighter.bindParts to handle Blender suffixes (e.g., LegL.001) and common rig naming variants.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Added auto scale + ground alignment based on mesh bounds (MODEL_TARGET_HEIGHT=14, DEFAULT_MODEL_SCALE=1). Now compute bounds from meshes only, set group scale and modelYOffset accordingly to avoid hidden/giant models.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Added unit normalization + scale clamp in StickFighter auto-scaling to prevent tiny/invisible models (mm/cm heuristic; clamp 0.2–8). Logs when clamp occurs.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Added ensureModelVisible for custom models (force DoubleSide, disable transparency, disable frustum culling) to fix invisible mesh cases; applied for non-skinnable models.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Switched default model back to /models/model01.glb per request to test visibility.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: For model02, force a solid MeshStandardMaterial (skinning=true) to rule out invisible/transparent material issues. Added FORCE_SOLID_MATERIAL_MODELS and applySolidMaterial.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Use SkeletonUtils.clone for skinned models to fix invisible/incorrect skinned meshes (clone(true) can break skins). buildCharacter now detects skinned meshes and clones appropriately.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Reverted default fighter model to /models/model01.glb per request (restore known-good model).
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Inspected model04.glb: Skins=1, Animations=1 (Bow), bones named pelvis/spine/head/upperarm_l/... Added bone name variants for model04 and mapped forward axis to Z.
+- 2026-02-05: Playwright run failed: missing local "playwright" package for web_game_playwright_client.js.
+- 2026-02-05: Added model04 to forced solid material list. Added warning log when no rig parts are found to help diagnose mapping.
+- 2026-02-05: Added prepareSkinnedMeshes (normalize skin weights, compute bounds, disable culling) to improve visibility for skinned models like model04.
+- 2026-02-05: Playwright run failed: browsers not installed. Need `npx playwright install`.
+- 2026-02-05: Added console logs for model load success/failure and metrics to diagnose invisible models.
+- 2026-02-05: Playwright run failed: browsers not installed. Need `npx playwright install`.
+- 2026-02-05: For model04, force unlit MeshBasicMaterial to rule out lighting issues; applySolidMaterial now supports unlit mode and sets needsUpdate.
+- 2026-02-05: Updated bone mapping order to prioritize model04 rig names (pelvis/root/spine_*, upperarm/lowerarm, thigh/calf, hand_r).
+- 2026-02-06: Expanded StickFighter bone mapping + animation to cover spine segments, neck, clavicles, hands, feet, and ball joints for full-body rigs (model04). Added subtle spine/clavicle/foot/ball motion driven by existing procedural pose.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied) even after browsers installed; cannot capture screenshots in this environment.
+- 2026-02-06: Dimmed character material color and removed emissive for forced-solid models to reduce bloom glare (MODEL_DIM_COLOR, lower metalness, higher roughness).
+- 2026-02-06: Reduced global bloom (strength/radius/threshold) and lowered toneMappingExposure in SceneManager to cut glow on bright characters.
+
+- 2026-02-06: Adjusted torso bone mapping to prefer spine_03/02/01 before pelvis/root so upper-body tilt doesn't skew legs (pose alignment for model04).
+- 2026-02-06: Playwright run failed (missing x64 browser) and mac-arm64 run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Added model05 animation mapping for cast/hit, animation mixer support, and passed skillId into playCast so clips can be chosen per skill.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Model05 facing yaw offset + recovery clip (LayToIdle) after hit; GIANT uses Levitate Entrance; FAN triggers Fighting Left Jab when sword fires.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Disabled hand sword attachment (SHOW_HAND_SWORD=false) so characters no longer hold a sword.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Switched default model to model06, added model06 anim maps (Meditate/Throw Object/Sword_Regular_*), and scheduled Throw Object for FAN fire + Sword_Regular_C for GIANT fire.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Reduced idle sway/bob for model06 to keep a more neutral stance while idle.
+
+- 2026-02-06: Disabled procedural pose for model06, smoothed hit/cast return offset, and kept neutral stance (no idle sway) while relying on animation clips.
+
+- 2026-02-06: Model06 hit reactions now default to Hit_Chest; FAN overrides to Hit_Knockback_RM + LayToIdle. Added idle loop (NinjaJump_Idle_Loop) for arms-straight stance and hit skillId routing.
+
+- 2026-02-06: Idle loop for model06 switched to Levitate Idle; idle loop resumes after attack/end clips.
+
+- 2026-02-06: FAN hit now forces return-to-base after knockback; idle loop now resumes after any clip ends, with Levitate Idle as default idle.
+
+- 2026-02-06: FAN knockback now forces return-to-base drift; idle loop resumes after any clip ends even if anim mode still cast.
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: Forced non-loop clip completion detection (time/paused), ensured idle loop resumes after any clip, and snap back to base when idle resumes; FAN knockback now flags return-to-base on recovery/knockback clip.
+
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: GIANT firing now cycles Sword_Regular_A_Rec/B/A/C during each shot cadence.
+
+- 2026-02-06: GIANT now plays a single slow A_Rec -> B -> C sequence spanning the whole firing window (no per-shot looping).
+
+- 2026-02-06: GIANT now uses only Sword_Regular_Combo with slowed duration during firing.
+
+- 2026-02-06: Reset model root transforms when returning to idle; recovery clip tracked to avoid being overridden; idle loop now force-resets and snaps return-to-base to avoid stuck offset.
+
+- 2026-02-06: Playwright run failed in sandbox (MachPortRendezvous permission denied).
+
+- 2026-02-06: GIANT charge start now plays Levitate Entrance when rings begin.
+
+- 2026-02-06: GIANT charge now loops Levitate Entrance until firing; on charge stop returns to Levitate Idle.
+
+- 2026-02-06: Added idle-hold system to keep Levitate Entrance during GIANT charge and Meditate during FAN gather; cleared holds at firing to allow action clips.
+
+- 2026-02-06: FAN now holds Meditate through sword creation (gather+aim) and starts Throw Object when firing begins; GIANT charge stop keeps Levitate Entrance briefly instead of snapping to idle, and GIANT fire clears hold at the fire moment. Playwright run failed: missing chromium headless shell (needs `npx playwright install`).

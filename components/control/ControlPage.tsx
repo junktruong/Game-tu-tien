@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import Script from 'next/script';
 import { initControl } from './controlClient';
 
 export default function ControlPage() {
@@ -9,42 +8,9 @@ export default function ControlPage() {
 
   useEffect(() => {
     let cleanup: null | (() => void) = null;
-    let cancelled = false;
-
-    const boot = async () => {
-      if (!(window as any).Hands) {
-        let tries = 0;
-        const waitForHands = () =>
-          new Promise<void>((resolve, reject) => {
-            const tick = () => {
-              if ((window as any).Hands) {
-                resolve();
-                return;
-              }
-              tries += 1;
-              if (tries > 60) {
-                reject(new Error('Hands.js load timeout'));
-                return;
-              }
-              setTimeout(tick, 100);
-            };
-            tick();
-          });
-        try {
-          await waitForHands();
-        } catch {
-          return;
-        }
-      }
-
-      if (cancelled) return;
-      cleanup = initControl({ socketUrl });
-    };
-
-    boot();
+    cleanup = initControl({ socketUrl });
 
     return () => {
-      cancelled = true;
       cleanup?.();
     };
   }, [socketUrl]);
@@ -75,6 +41,67 @@ export default function ControlPage() {
         </button>
         <div className="hint">
           Test nhanh: <b>Q/W/E/R/T/Y/U/I</b>
+        </div>
+        <div id="poseControls" className="panel">
+          <div className="panel-title">Arm Tracking</div>
+          <div className="row">
+            <button id="calibrateBtn" className="btn secondary">
+              Calibrate
+            </button>
+            <label className="toggle">
+              <input id="mirrorToggle" type="checkbox" defaultChecked />
+              <span>Mirror</span>
+            </label>
+            <label className="toggle">
+              <input id="debugToggle" type="checkbox" />
+              <span>Debug</span>
+            </label>
+            <label className="toggle">
+              <input id="armGestureToggle" type="checkbox" />
+              <span>Arm Pose</span>
+            </label>
+          </div>
+          <div className="hint">Calibrate khi tay ở pose chuẩn để giảm lệch.</div>
+        </div>
+        <div id="cameraControls" className="panel">
+          <div className="panel-title">Camera</div>
+          <label>
+            Mode
+            <select id="cameraMode" defaultValue="TPS_BACK">
+              <option value="TPS_BACK">TPS_BACK</option>
+              <option value="TPS_FRONT">TPS_FRONT</option>
+              <option value="FPS">FPS</option>
+              <option value="ORBIT">ORBIT</option>
+              <option value="TOP">TOP</option>
+              <option value="SIDE">SIDE</option>
+              <option value="CINEMATIC_A">CINEMATIC_A</option>
+              <option value="CINEMATIC_B">CINEMATIC_B</option>
+            </select>
+          </label>
+          <label>
+            Target
+            <select id="cameraTarget" defaultValue="center">
+              <option value="center">Center</option>
+              <option value="p1">P1</option>
+              <option value="p2">P2</option>
+            </select>
+          </label>
+          <label>
+            Yaw (deg) <span id="cameraYawValue">0</span>
+            <input id="cameraYaw" type="range" min="-180" max="180" defaultValue="0" />
+          </label>
+          <label>
+            Pitch (deg) <span id="cameraPitchValue">10</span>
+            <input id="cameraPitch" type="range" min="-30" max="60" defaultValue="10" />
+          </label>
+          <label>
+            Dist <span id="cameraDistValue">44</span>
+            <input id="cameraDist" type="range" min="12" max="120" defaultValue="44" />
+          </label>
+          <label>
+            FOV <span id="cameraFovValue">50</span>
+            <input id="cameraFov" type="range" min="30" max="90" defaultValue="50" />
+          </label>
         </div>
       </div>
 
@@ -153,12 +180,8 @@ export default function ControlPage() {
       </div>
 
       <video className="input_video" playsInline muted />
-
-      <Script
-        src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"
-        strategy="beforeInteractive"
-        crossOrigin="anonymous"
-      />
+      <video id="cameraPreview" className="camera_preview" playsInline muted />
+      <canvas id="poseDebug" className="pose_debug" width="640" height="480" />
 
       <style jsx global>{`
         :root {
@@ -180,6 +203,59 @@ export default function ControlPage() {
           pointer-events: none;
           left: -10px;
           top: -10px;
+        }
+        .camera_preview {
+          position: fixed;
+          left: 16px;
+          bottom: 16px;
+          width: 240px;
+          height: 180px;
+          border-radius: 12px;
+          border: 1px solid rgba(0, 255, 255, 0.35);
+          background: rgba(0, 0, 0, 0.6);
+          object-fit: cover;
+          display: none;
+          z-index: 10;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        }
+        .camera_preview.mirror {
+          transform: scaleX(-1);
+        }
+        .pose_debug {
+          position: fixed;
+          right: 18px;
+          bottom: 18px;
+          width: 320px;
+          height: 240px;
+          border: 1px solid rgba(0, 255, 255, 0.4);
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.35);
+          display: none;
+          z-index: 6;
+        }
+        .panel {
+          margin-top: 12px;
+          padding: 10px 12px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 10px;
+          background: rgba(0, 0, 0, 0.45);
+        }
+        .panel-title {
+          font-size: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: rgba(255, 255, 255, 0.65);
+          margin-bottom: 8px;
+        }
+        .panel .row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          align-items: center;
+        }
+        .btn.secondary {
+          background: rgba(0, 255, 255, 0.12);
+          border-color: rgba(0, 255, 255, 0.4);
         }
         #loading {
           position: absolute;
