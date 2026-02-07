@@ -1,6 +1,6 @@
 import { SKILLS } from "../../../config";
 
-export function giantOnCast(ctx, event){
+export function giantOnCast(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   const fighter = ctx.fighters?.[event.attacker];
   const cadenceSec = SKILLS.GIANT.meta?.cadenceSec ?? 0.12;

@@ -1,4 +1,9 @@
-export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, options = {}) {
+export function createFanVNTextSwordEffect(
+  vfx: any,
+  playerObject: any,
+  targetObject: any,
+  options: Record<string, number> = {},
+) {
   const THREE = window.THREE;
   const scene = vfx?.scene;
   if (!scene) {
@@ -63,7 +68,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
   const canvas = document.createElement("canvas");
   canvas.width = 256;
   canvas.height = 256;
-  const g = canvas.getContext("2d");
+  const g = canvas.getContext("2d")!;
   g.clearRect(0, 0, canvas.width, canvas.height);
   g.font = "900 200px 'Courier New', monospace";
   g.textAlign = "center";
@@ -94,9 +99,16 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
   const group = new THREE.Group();
   scene.add(group);
 
-  const dragons = [];
+  type DragonSegment = { sprite: any; index: number };
+  type Dragon = {
+    segments: DragonSegment[];
+    phase: number;
+    baseOffset: any;
+    radiusScale: number;
+  };
+  const dragons: Dragon[] = [];
 
-  function createSegment(index) {
+  function createSegment(index: number) {
     const mat = baseMat.clone();
     const sp = new THREE.Sprite(mat);
     sp.visible = false;
@@ -106,7 +118,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return { sprite: sp, index };
   }
 
-  function ensureSegments(count) {
+  function ensureSegments(count: number) {
     for (const d of dragons) {
       for (let s = d.segments.length; s < count; s += 1) {
         d.segments.push(createSegment(s));
@@ -130,7 +142,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     });
   }
 
-  function ensureDragonPool(count) {
+  function ensureDragonPool(count: number) {
     while (dragons.length < count) {
       createDragon();
     }
@@ -143,21 +155,21 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
   let t = 0;
   let player = playerObject;
   let target = targetObject;
-  let getTargetPos = null;
+  let getTargetPos: ((out?: any) => any) | null = null;
   let colorHex = 0xffffff;
   let rallyPoint = new THREE.Vector3();
   let shootDir = new THREE.Vector3(1, 0, 0);
   let shootDist = 0;
-  let hitCallback = null;
+  let hitCallback: (() => void) | null = null;
 
-  let swordMesh = null;
+  let swordMesh: any | null = null;
   let swordInFlight = false;
   let swordAimDir = new THREE.Vector3(1, 0, 0);
   let swordAimReady = false;
-  let pierceState = null;
-  let impactState = null;
+  let pierceState: any | null = null;
+  let impactState: any | null = null;
 
-  function setOptions(next = {}) {
+  function setOptions(next: Record<string, number> = {}) {
     Object.assign(cfg, next);
     if (!Number.isFinite(cfg.dragonCount) || cfg.dragonCount < 1) cfg.dragonCount = 1;
     if (!Number.isFinite(cfg.segmentsPerDragon) || cfg.segmentsPerDragon < 4) cfg.segmentsPerDragon = 4;
@@ -165,7 +177,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     ensureSegments(cfg.segmentsPerDragon);
   }
 
-  function aimSwordAt(targetPos, originPos) {
+  function aimSwordAt(targetPos: any, originPos?: any) {
     if (!swordMesh) return;
     const origin = originPos || swordMesh.position || rallyPoint;
     const dir = tmp.v3a.copy(targetPos).sub(origin);
@@ -184,16 +196,16 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     }
   }
 
-  function getSwordAnchor(out) {
+  function getSwordAnchor(out: any) {
     out.copy(rallyPoint);
     if (cfg.swordUpOffset) out.y += cfg.swordUpOffset;
     if (cfg.swordBackOffset) out.z -= cfg.swordBackOffset;
     return out;
   }
 
-  function tintSword(obj, hex) {
+  function tintSword(obj: any, hex: number) {
     if (!obj) return;
-    obj.traverse((o) => {
+    obj.traverse((o: any) => {
       if (!o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
@@ -231,7 +243,12 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return swordMesh;
   }
 
-  function setActors(nextPlayer, nextTarget, nextGetTargetPos, nextColor) {
+  function setActors(
+    nextPlayer: any,
+    nextTarget: any,
+    nextGetTargetPos: any,
+    nextColor?: number,
+  ) {
     player = nextPlayer || player;
     target = nextTarget || target;
     getTargetPos = nextGetTargetPos || getTargetPos;
@@ -242,7 +259,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     }
   }
 
-  function getRallyPoint(out) {
+  function getRallyPoint(out: any) {
     if (player?.group?.position) out.copy(player.group.position);
     else if (player?.position) out.copy(player.position);
     else out.set(0, 0, 0);
@@ -250,7 +267,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return out;
   }
 
-  function getTargetPoint(out) {
+  function getTargetPoint(out: any) {
     if (typeof getTargetPos === "function") {
       out.copy(getTargetPos());
       return out;
@@ -268,7 +285,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return out;
   }
 
-  function getTargetMid(out) {
+  function getTargetMid(out: any) {
     if (target?.getCorePos) {
       return out.copy(target.getCorePos(8.2));
     }
@@ -292,7 +309,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return 1;
   }
 
-  function getSmoothedAimDir(origin, targetPos, dt) {
+  function getSmoothedAimDir(origin: any, targetPos: any, dt: number) {
     const dir = tmp.v3a.copy(targetPos).sub(origin);
     if (cfg.swordTiltDown) dir.y -= cfg.swordTiltDown;
     if (dir.lengthSq() < 1e-6) {
@@ -313,7 +330,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return swordAimDir;
   }
 
-  function applySwordScale(mult) {
+  function applySwordScale(mult: number) {
     if (!swordMesh) return;
     swordMesh.scale.set(
       cfg.swordWidth * mult,
@@ -322,7 +339,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     );
   }
 
-  function applySwordScaleTo(mesh, mult) {
+  function applySwordScaleTo(mesh: any, mult: number) {
     if (!mesh) return;
     mesh.scale.set(
       cfg.swordWidth * mult,
@@ -331,7 +348,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     );
   }
 
-  function alignSwordToDir(mesh, dir) {
+  function alignSwordToDir(mesh: any, dir: any) {
     if (!mesh) return;
     if (typeof vfx?._alignMeshYToDir === "function") {
       vfx._alignMeshYToDir(mesh, dir);
@@ -343,7 +360,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     }
   }
 
-  function getSwordBaseLength(mesh) {
+  function getSwordBaseLength(mesh: any) {
     if (!mesh) return 0;
     if (!mesh.userData) mesh.userData = {};
     if (mesh.userData.__baseLen) return mesh.userData.__baseLen;
@@ -354,16 +371,16 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     return len;
   }
 
-  function getSwordLength(mesh) {
+  function getSwordLength(mesh: any) {
     if (!mesh) return 0;
     const baseLen = getSwordBaseLength(mesh);
     const scaleY = mesh.scale?.y ?? 1;
     return Math.max(0.001, baseLen * scaleY);
   }
 
-  function setSwordOpacity(obj, value) {
+  function setSwordOpacity(obj: any, value: number) {
     if (!obj) return;
-    obj.traverse((o) => {
+    obj.traverse((o: any) => {
       if (!o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
@@ -388,7 +405,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     pierceState = null;
   }
 
-  function triggerImpact(mid) {
+  function triggerImpact(mid: any) {
     if (typeof target?.playLift === "function") {
       target.playLift(cfg.pierceLiftHeight, cfg.pierceLiftDur);
     }
@@ -411,7 +428,7 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     }
   }
 
-  function startPierce(impactPos, dir, targetObj) {
+  function startPierce(impactPos: any, dir: any, targetObj: any) {
     clearPierce();
     const front = createSword();
     const back = createSword();
@@ -436,10 +453,10 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     else pierceDir.normalize();
 
     const baseOrder = targetObj?.mesh?.renderOrder ?? 0;
-    front.traverse((o) => {
+    front.traverse((o: any) => {
       if (o.isMesh || o.isSprite) o.renderOrder = baseOrder + 1;
     });
-    back.traverse((o) => {
+    back.traverse((o: any) => {
       if (o.isMesh || o.isSprite) o.renderOrder = baseOrder - 1;
     });
 
@@ -570,14 +587,28 @@ export function createFanVNTextSwordEffect(vfx, playerObject, targetObject, opti
     active = false;
   }
 
-  function play({ playerObject: p, targetObject: tgt, targetGetter, color, options: opts, onHit } = {}) {
+  function play({
+    playerObject: p,
+    targetObject: tgt,
+    targetGetter,
+    color,
+    options: opts,
+    onHit,
+  }: {
+    playerObject?: any;
+    targetObject?: any;
+    targetGetter?: any;
+    color?: number;
+    options?: Record<string, number>;
+    onHit?: () => void;
+  } = {}) {
     setActors(p, tgt, targetGetter, color);
     if (opts) setOptions(opts);
     hitCallback = typeof onHit === "function" ? onHit : null;
     reset();
   }
 
-  function update(dt) {
+  function update(dt: number) {
     if (pierceState) {
       pierceState.t += dt;
       if (pierceState.t > pierceState.hold) {

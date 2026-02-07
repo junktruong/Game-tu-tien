@@ -12,7 +12,7 @@ import { StickFighter } from '@/components/display/battlefield/entities/StickFig
 
 declare global {
   interface Window {
-    THREE?: any;
+    THREE: any;
     updateProfileSkin?: (textureUrl: string) => void;
     __pendingProfileTextureUrl?: string;
   }

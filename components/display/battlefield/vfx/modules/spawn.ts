@@ -1,4 +1,4 @@
-export function spawnSlash(vfx, pos, colorHex, yRot = 0) {
+export function spawnSlash(vfx: any, pos: any, colorHex: number, yRot = 0) {
   const THREE = window.THREE;
   let mesh = vfx._pool?.slashes?.pop();
   if (!mesh) {
@@ -27,7 +27,14 @@ export function spawnSlash(vfx, pos, colorHex, yRot = 0) {
   vfx.slashes.push(mesh);
 }
 
-export function spawnShockwave(vfx, pos, colorHex, start = 2.0, end = 18.0, life = 0.28) {
+export function spawnShockwave(
+  vfx: any,
+  pos: any,
+  colorHex: number,
+  start = 2.0,
+  end = 18.0,
+  life = 0.28,
+) {
   const THREE = window.THREE;
   let mesh = vfx._pool?.shockwaves?.pop();
   if (!mesh) {
@@ -55,7 +62,14 @@ export function spawnShockwave(vfx, pos, colorHex, start = 2.0, end = 18.0, life
   vfx.shockwaves.push(mesh);
 }
 
-export function spawnSparks(vfx, pos, colorHex, count = 16, life = 0.22, speed = 14) {
+export function spawnSparks(
+  vfx: any,
+  pos: any,
+  colorHex: number,
+  count = 16,
+  life = 0.22,
+  speed = 14,
+) {
   const THREE = window.THREE;
   if (!vfx._pool?.sparks) {
     vfx._pool = vfx._pool || {};
@@ -123,7 +137,12 @@ export function spawnSparks(vfx, pos, colorHex, count = 16, life = 0.22, speed =
   vfx.sparkBursts.push(pts);
 }
 
-export function spawnBurstAt(vfx, pos, colorHex, scale = 1) {
+export function spawnBurstAt(
+  vfx: any,
+  pos: any,
+  colorHex: number,
+  scale = 1,
+) {
   const THREE = window.THREE;
   let s = vfx._pool?.bursts?.pop();
   if (!s) {
@@ -153,9 +172,9 @@ export function spawnBurstAt(vfx, pos, colorHex, scale = 1) {
 }
 
 export function spawnLightRays(
-  vfx,
-  pos,
-  colorHex,
+  vfx: any,
+  pos: any,
+  colorHex: number,
   count = 10,
   length = 12,
   life = 0.28,
@@ -217,7 +236,14 @@ export function spawnLightRays(
   }
 }
 
-export function spawnMagicCircle(vfx, pos, colorHex, scale = 1, life = 0.8, rotSpeed = 2.2) {
+export function spawnMagicCircle(
+  vfx: any,
+  pos: any,
+  colorHex: number,
+  scale = 1,
+  life = 0.8,
+  rotSpeed = 2.2,
+) {
   const THREE = window.THREE;
   const size = 26 * scale;
 

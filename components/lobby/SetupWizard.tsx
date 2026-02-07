@@ -76,9 +76,7 @@ export default function SetupWizard({
             <h2>Khởi tạo hồ sơ chiến đấu</h2>
             <p>Thiết lập từng bước, lưu vào DB rồi chuyển thẳng về trang chủ.</p>
           </div>
-          <Tag tone="cyan">
-            {step + 1}/{totalSteps}
-          </Tag>
+          <Tag tone="cyan">{`${step + 1}/${totalSteps}`}</Tag>
         </div>
 
         {step === 0 && (
@@ -127,7 +125,7 @@ export default function SetupWizard({
                     <strong>{character.name}</strong>
                     <p>{character.role}</p>
                   </div>
-                  <Tag tone="emerald">Lv.{character.level}</Tag>
+                  <Tag tone="emerald">{`Lv.${character.level}`}</Tag>
                 </button>
               ))}
             </div>

@@ -64,13 +64,17 @@ export class HUD {
   showToast(text: string) {
     this.toastEl.textContent = text;
     this.toastEl.classList.add("show");
-    clearTimeout(this._toastTimer);
+    if (this._toastTimer !== null) {
+      clearTimeout(this._toastTimer);
+    }
     this._toastTimer = setTimeout(() => this.toastEl.classList.remove("show"), 650);
   }
 
   setBanner(text: string, sticky = false) {
     this.bannerEl.textContent = text;
-    clearTimeout(this._bannerTimer);
+    if (this._bannerTimer !== null) {
+      clearTimeout(this._bannerTimer);
+    }
     if (!sticky) {
       this._bannerTimer = setTimeout(() => {
         this.bannerEl.textContent = `TU TIÊN FIGHT | ROOM ${(this.room||"demo").toUpperCase()}`;

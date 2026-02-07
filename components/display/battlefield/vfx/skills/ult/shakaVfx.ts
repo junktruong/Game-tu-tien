@@ -1,6 +1,6 @@
 import { SKILLS } from "../../../config";
 
-export function shakaOnCast(ctx, event){
+export function shakaOnCast(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   const meta = SKILLS.SHAKA.meta ?? {};
 

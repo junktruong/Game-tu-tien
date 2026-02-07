@@ -1,15 +1,29 @@
-export function playVankiemUlt(vfx, {
-  fromFighter,
-  getTargetPos,
-  colorHex,
-  orbitSec = 0.55,
-  launchSec = 0.70,
-  arc = 10.0,
-  bigScale = 3.2,
-  gatherHeight = 11.0,
-  bigChargeScale = 4.2,
-  onHit = null
-}){
+export function playVankiemUlt(
+  vfx: any,
+  {
+    fromFighter,
+    getTargetPos,
+    colorHex,
+    orbitSec = 0.55,
+    launchSec = 0.7,
+    arc = 10.0,
+    bigScale = 3.2,
+    gatherHeight = 11.0,
+    bigChargeScale = 4.2,
+    onHit = null,
+  }: {
+    fromFighter: any;
+    getTargetPos: () => any;
+    colorHex: number;
+    orbitSec?: number;
+    launchSec?: number;
+    arc?: number;
+    bigScale?: number;
+    gatherHeight?: number;
+    bigChargeScale?: number;
+    onHit?: ((...args: any[]) => void) | null;
+  },
+) {
   const THREE = window.THREE;
   const assets = vfx._ensureFanAssets ? vfx._ensureFanAssets(40) : null;
   if (!assets) return;
@@ -17,9 +31,9 @@ export function playVankiemUlt(vfx, {
   const smallSwords = assets.smallSwords || [];
   const bigSword = assets.bigSword;
 
-  const tintSword = (obj) => {
+  const tintSword = (obj: any) => {
     if (!obj) return;
-    obj.traverse((o)=>{
+    obj.traverse((o: any) => {
       if (!o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats){

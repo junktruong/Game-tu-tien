@@ -1,6 +1,6 @@
 import { SKILLS } from "../../../config";
 
-export function basicAttackOnHit(ctx, event){
+export function basicAttackOnHit(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   const from = ctx.fighters[event.attacker].getMuzzlePos();
   const to = ctx.fighters[event.defender].getCorePos(9.2);

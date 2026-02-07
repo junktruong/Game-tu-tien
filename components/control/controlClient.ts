@@ -34,12 +34,15 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
     return () => {};
   }
 
+  const loadingElEl = loadingEl;
+  const startBtnEl = startBtn;
+
   if (!isSecure) {
-    loadingEl.style.display = "block";
-    loadingEl.innerHTML =
+    loadingElEl.style.display = "block";
+    loadingElEl.innerHTML =
       "Không thể mở camera vì trang chưa an toàn.<br/>" +
       "Hãy chạy bằng <b>https</b> hoặc <b>http://localhost</b>.";
-    startBtn.style.display = "none";
+    startBtnEl.style.display = "none";
     return () => {};
   }
 
@@ -77,7 +80,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
     );
   }
 
-  const video = document.querySelector<HTMLVideoElement>(".input_video");
+  const video = document.querySelector<HTMLVideoElement>(".input_video")!;
   const previewVideo = $("cameraPreview") as HTMLVideoElement | null;
   if (!video) {
     return () => {};
@@ -398,11 +401,11 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       handsReady = true;
     } catch (err) {
       console.warn("HandLandmarker init failed:", err);
-      loadingEl.style.display = "block";
-      loadingEl.innerHTML =
+      loadingElEl.style.display = "block";
+      loadingElEl.innerHTML =
         "Không tải được model nhận diện tay.<br/>" +
         "Hãy kiểm tra kết nối mạng hoặc CDN bị chặn.";
-      startBtn.style.display = "block";
+      startBtnEl.style.display = "block";
     }
   }
 
@@ -763,9 +766,9 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
 
   function makeStab(stableMs = STABLE_MS, lostMs = LOST_MS) {
     return {
-      cand: GESTURE.IDLE,
+      cand: GESTURE.IDLE as string,
       candSince: 0,
-      stable: GESTURE.IDLE,
+      stable: GESTURE.IDLE as string,
       lastSeen: 0,
       update(now: number, g: string) {
         this.lastSeen = now;
@@ -918,7 +921,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   // Commit policy (cooldown)
   // =========================
   const COOLDOWN_MS = 240;
-  let lastCommittedGesture = GESTURE.IDLE;
+  let lastCommittedGesture: string = GESTURE.IDLE;
   let lastGestureChangeAt = 0;
 
   function sendInput(gesture: string, aimLm: any) {
@@ -972,7 +975,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
     if (!active.current) return;
     if (!gotFirstResults) {
       gotFirstResults = true;
-      loadingEl.style.display = "none";
+      loadingElEl.style.display = "none";
     }
 
     const now = Date.now();
@@ -1047,8 +1050,8 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
         throw new Error("Trình duyệt không hỗ trợ getUserMedia");
       }
 
-      loadingEl.style.display = "block";
-      loadingEl.innerHTML = "Đang mở camera...";
+      loadingElEl.style.display = "block";
+      loadingElEl.innerHTML = "Đang mở camera...";
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
@@ -1073,7 +1076,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
         previewVideo.style.display = "block";
       }
 
-      loadingEl.innerHTML = "Đang nhận diện cử chỉ...";
+      loadingElEl.innerHTML = "Đang nhận diện cử chỉ...";
       initHandLandmarker();
       if (armPoseEnabled) {
         initPoseLandmarker();
@@ -1156,21 +1159,21 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
       else if (err.name === "NotReadableError") msg += "Camera đang bị app khác dùng.";
       else msg += `Lỗi: ${err.name || err.message || err}`;
 
-      loadingEl.style.display = "block";
-      loadingEl.innerHTML =
+      loadingElEl.style.display = "block";
+      loadingElEl.innerHTML =
         msg +
         "<br/>" +
         "Mẹo: vào <b>Site settings → Camera → Allow</b>,<br/>" +
         "và mở bằng <b>https</b> hoặc <b>http://localhost</b>.";
-      startBtn.style.display = "block";
+      startBtnEl.style.display = "block";
     }
   }
 
   const startHandler = () => {
-    startBtn.style.display = "none";
+    startBtnEl.style.display = "none";
     startCameraManually();
   };
-  startBtn.addEventListener("click", startHandler);
+  startBtnEl.addEventListener("click", startHandler);
 
   // =========================
   // Quick test keys
@@ -1191,7 +1194,7 @@ export function initControl({ socketUrl }: { socketUrl: string }) {
   return () => {
     active.current = false;
     joinBtn?.removeEventListener("click", joinHandler);
-    startBtn?.removeEventListener("click", startHandler);
+    startBtnEl.removeEventListener("click", startHandler);
     removeEventListener("keydown", keyHandler);
     for (const el of cameraInputs) {
       if (!el) continue;

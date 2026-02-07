@@ -1,5 +1,5 @@
 import { clamp, easeInOutSine, easeOutCubic, lerp } from "../utils";
-import type { ArmPosePacket, QuatArray } from "../../shared/ArmPoseTypes";
+import type { ArmPosePacket, QuatArray } from "../../../shared/ArmPoseTypes";
 
 const DEFAULT_MODEL_URL = "/models/model07.glb";
 const MODEL_TARGET_HEIGHT = 14;
@@ -419,8 +419,13 @@ export class StickFighter {
       const hasSkinnedMesh = this.detectSkinnedMesh(source);
       let model = source;
       if (hasSkinnedMesh) {
-        const skelMod = await import("three/examples/jsm/utils/SkeletonUtils.js");
-        const cloneFn = skelMod.clone || skelMod.SkeletonUtils?.clone;
+        const skelMod = (await import(
+          "three/examples/jsm/utils/SkeletonUtils.js"
+        )) as {
+          clone?: (root: any) => any;
+          SkeletonUtils?: { clone?: (root: any) => any };
+        };
+        const cloneFn = skelMod.clone ?? skelMod.SkeletonUtils?.clone;
         model = cloneFn ? cloneFn(source) : source.clone(true);
       } else {
         model = source.clone(true);

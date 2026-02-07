@@ -21,8 +21,9 @@ export default function LobbyClient({ data }: { data: GameData }) {
 
 
   useEffect(() => {
-    if (session?.user?.name) {
-      setAccount((prev) => ({ ...prev, displayName: session.user.name ?? prev.displayName }));
+    const name = session?.user?.name;
+    if (name) {
+      setAccount((prev) => ({ ...prev, displayName: name }));
     }
   }, [session]);
 

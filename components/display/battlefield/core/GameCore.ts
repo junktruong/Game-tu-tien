@@ -2,7 +2,9 @@ import { GAME, SKILLS } from "../config";
 import { clamp, Scheduler } from "../utils";
 import type { GameEvent, GameState, PlayerState } from "./types";
 
-type SkillDef = typeof SKILLS[keyof typeof SKILLS];
+type SkillDef = Omit<typeof SKILLS[keyof typeof SKILLS], "meta"> & {
+  meta: Record<string, number>;
+};
 
 type CoreOptions = {
   onEvent?: (event: GameEvent) => void;

@@ -6,7 +6,9 @@ export class CastRender implements RenderHandler {
   handle(event: GameEvent, ctx: RenderContext) {
     if (event.type !== "SKILL_CAST") return false;
 
-    const def = SKILLS[event.skillId] ?? null;
+    const def = (event.skillId in SKILLS
+      ? SKILLS[event.skillId as keyof typeof SKILLS]
+      : null) ?? null;
     if (def?.anim) {
       const isSkill = def.category !== SKILL_CATEGORY.NORMAL;
       ctx.fighters[event.attacker].playCast({

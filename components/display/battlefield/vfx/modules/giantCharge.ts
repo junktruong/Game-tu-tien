@@ -1,4 +1,10 @@
-export function startGiantCharge(vfx, ownerFighter, colorHex, ownerIndex, opts = {}){
+export function startGiantCharge(
+  vfx: any,
+  ownerFighter: any,
+  colorHex: number,
+  ownerIndex: number,
+  opts: Record<string, number> = {},
+) {
   if (typeof ownerIndex !== "number" || !ownerFighter) return;
 
   vfx.stopGiantCharge(ownerIndex);
@@ -29,18 +35,18 @@ export function startGiantCharge(vfx, ownerFighter, colorHex, ownerIndex, opts =
   vfx._giantAddRing(ownerIndex);
 }
 
-export function stopGiantCharge(vfx, ownerIndex){
+export function stopGiantCharge(vfx: any, ownerIndex: number) {
   const st = vfx.giantCharges.get(ownerIndex);
   if (!st) return;
 
   for (const r of st.rings){
     vfx.scene.remove(r.grp);
 
-    r.grp.traverse((o)=>{
+    r.grp.traverse((o: any) => {
       if (o.isMesh){
         o.geometry?.dispose?.();
         if (o.material){
-          if (Array.isArray(o.material)) o.material.forEach(m=>m.dispose?.());
+          if (Array.isArray(o.material)) o.material.forEach((m: any) => m.dispose?.());
           else o.material.dispose?.();
         }
       }
@@ -53,7 +59,7 @@ export function stopGiantCharge(vfx, ownerIndex){
   vfx.giantCharges.delete(ownerIndex);
 }
 
-export function giantAddRing(vfx, ownerIndex){
+export function giantAddRing(vfx: any, ownerIndex: number) {
   const THREE = window.THREE;
   const st = vfx.giantCharges.get(ownerIndex);
   if (!st) return;
@@ -105,14 +111,24 @@ export function giantAddRing(vfx, ownerIndex){
   });
 }
 
-export function fireGiantFromStackedRings(vfx, {
-  ownerIndex,
-  getTargetPos,
-  speed = 160,
-  arc = 0,
-  cadenceSec = 0.10,
-  onHit = null,
-}){
+export function fireGiantFromStackedRings(
+  vfx: any,
+  {
+    ownerIndex,
+    getTargetPos,
+    speed = 160,
+    arc = 0,
+    cadenceSec = 0.1,
+    onHit = null,
+  }: {
+    ownerIndex: number;
+    getTargetPos: () => any;
+    speed?: number;
+    arc?: number;
+    cadenceSec?: number;
+    onHit?: ((...args: any[]) => void) | null;
+  },
+) {
   const st = vfx.giantCharges.get(ownerIndex);
   if (!st) return 0;
 
@@ -164,15 +180,26 @@ export function fireGiantFromStackedRings(vfx, {
   return todo.length;
 }
 
-export function fireGiantFromRingCharge(vfx, {
-  ownerIndex,
-  getTargetPos,
-  speed = 120,
-  arc = 0,
-  cadenceSec = 0.12,
-  maxShots = 14,
-  onHit = null,
-}){
+export function fireGiantFromRingCharge(
+  vfx: any,
+  {
+    ownerIndex,
+    getTargetPos,
+    speed = 120,
+    arc = 0,
+    cadenceSec = 0.12,
+    maxShots = 14,
+    onHit = null,
+  }: {
+    ownerIndex: number;
+    getTargetPos: () => any;
+    speed?: number;
+    arc?: number;
+    cadenceSec?: number;
+    maxShots?: number;
+    onHit?: ((...args: any[]) => void) | null;
+  },
+) {
   const st = vfx.giantCharges.get(ownerIndex);
   if (st?.rings?.length){
     return vfx.fireGiantFromStackedRings({

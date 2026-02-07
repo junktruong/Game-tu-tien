@@ -1,6 +1,6 @@
 import { SKILLS } from "../../../config";
 
-export function spinOnCast(ctx, event){
+export function spinOnCast(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   ctx.vfx.spawnBurstAt(ctx.fighters[event.attacker].getCorePos(9.6), col, 1.1);
   if (typeof ctx.vfx.spawnShockwave === "function") {
@@ -25,7 +25,7 @@ export function spinOnCast(ctx, event){
   }
 }
 
-export function spinOnHit(ctx, event){
+export function spinOnHit(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   const hitPos = ctx.fighters[event.defender].getCorePos(9.4);
   if (typeof ctx.vfx.spawnShockwave === "function") {

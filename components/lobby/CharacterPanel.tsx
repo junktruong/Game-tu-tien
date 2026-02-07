@@ -36,7 +36,7 @@ export default function CharacterPanel({
                 <strong>{character.name}</strong>
                 <p>{character.role}</p>
               </div>
-              <Tag tone="cyan">Lv.{character.level}</Tag>
+              <Tag tone="cyan">{`Lv.${character.level}`}</Tag>
             </button>
           ))}
           <Button variant="ghost">Thêm nhân vật mới</Button>

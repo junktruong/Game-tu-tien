@@ -7,6 +7,8 @@ export const metadata = {
   title: 'Trang chủ - Tu Tiên Fight',
 };
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const data = await getGameData();
 

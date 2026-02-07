@@ -1,4 +1,10 @@
-export function spawnShield(vfx, ownerFighter, colorHex, type, ownerIndex){
+export function spawnShield(
+  vfx: any,
+  ownerFighter: any,
+  colorHex: number,
+  type: string,
+  ownerIndex: number,
+) {
   const THREE = window.THREE;
   // NOTE: type is "WALL" or "SPHERE"
   // - SPHERE: nhiều kiếm dựng dọc quay quanh nhân vật
@@ -7,8 +13,8 @@ export function spawnShield(vfx, ownerFighter, colorHex, type, ownerIndex){
   const grp = new THREE.Group();
 
   // helper: set opacity for all materials under obj
-  const setOpacityDeep = (obj, opacity)=>{
-    obj.traverse((o)=>{
+  const setOpacityDeep = (obj: any, opacity: number) => {
+    obj.traverse((o: any) => {
       if (!o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats){

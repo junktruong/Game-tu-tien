@@ -1,4 +1,11 @@
-export function spawnProjectileBezier(vfx, from, to, colorHex, speed, opts = {}){
+export function spawnProjectileBezier(
+  vfx: any,
+  from: any,
+  to: any,
+  colorHex: number,
+  speed: number,
+  opts: Record<string, any> = {},
+) {
   const THREE = window.THREE;
   const p = vfx.swordFactory.createSwordProjectile(colorHex);
   p.position.copy(from);
@@ -38,7 +45,16 @@ export function spawnProjectileBezier(vfx, from, to, colorHex, speed, opts = {})
   });
 }
 
-export function spawnProjectileToTarget(vfx, from, to, colorHex, speed, wobble = 0, arc = 0, onHit = null){
+export function spawnProjectileToTarget(
+  vfx: any,
+  from: any,
+  to: any,
+  colorHex: number,
+  speed: number,
+  wobble = 0,
+  arc = 0,
+  onHit: ((...args: any[]) => void) | null = null,
+) {
   const THREE = window.THREE;
   const p = vfx.swordFactory.createSwordProjectile(colorHex);
   p.position.copy(from);
@@ -59,7 +75,17 @@ export function spawnProjectileToTarget(vfx, from, to, colorHex, speed, wobble =
   });
 }
 
-export function spawnDelayedProjectileToTarget(vfx, start, target, color, speed, wobble = 0, arc = 0, delay = 0, onHit = null){
+export function spawnDelayedProjectileToTarget(
+  vfx: any,
+  start: any,
+  target: any,
+  color: number,
+  speed: number,
+  wobble = 0,
+  arc = 0,
+  delay = 0,
+  onHit: ((...args: any[]) => void) | null = null,
+) {
   vfx.projectiles.push({
     __delayed: true,
     __delay: Math.max(0, delay),
@@ -73,22 +99,40 @@ export function spawnDelayedProjectileToTarget(vfx, start, target, color, speed,
   });
 }
 
-export function spawnFireDragon(vfx, {
-  from,
-  to,
-  colorHex,
-  speed = 120,
-  arc = 9.0,
-  segments = 12,
-  segmentGap = 0.06,
-  swayAmp = 1.6,
-  swayFreq = 6.5,
-  pierceAt = 0.78,
-  pierceTighten = 0.35,
-  pierceStretch = 0.55,
-  pierceSquash = 0.28,
-  onHit = null,
-}){
+export function spawnFireDragon(
+  vfx: any,
+  {
+    from,
+    to,
+    colorHex,
+    speed = 120,
+    arc = 9.0,
+    segments = 12,
+    segmentGap = 0.06,
+    swayAmp = 1.6,
+    swayFreq = 6.5,
+    pierceAt = 0.78,
+    pierceTighten = 0.35,
+    pierceStretch = 0.55,
+    pierceSquash = 0.28,
+    onHit = null,
+  }: {
+    from: any;
+    to: any;
+    colorHex: number;
+    speed?: number;
+    arc?: number;
+    segments?: number;
+    segmentGap?: number;
+    swayAmp?: number;
+    swayFreq?: number;
+    pierceAt?: number;
+    pierceTighten?: number;
+    pierceStretch?: number;
+    pierceSquash?: number;
+    onHit?: ((...args: any[]) => void) | null;
+  },
+) {
   const THREE = window.THREE;
 
   const baseColor = new THREE.Color(colorHex);

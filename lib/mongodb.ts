@@ -11,14 +11,12 @@ if (!uri) {
   throw new Error('Missing MONGODB_URI in environment');
 }
 
-const client = new MongoClient(uri);
-
-const clientPromise = global._mongoClientPromise ?? client.connect();
-
-if (!global._mongoClientPromise) {
-  global._mongoClientPromise = clientPromise;
-}
+const mongoUri = uri;
 
 export async function getMongoClient() {
-  return clientPromise;
+  if (!global._mongoClientPromise) {
+    const client = new MongoClient(mongoUri);
+    global._mongoClientPromise = client.connect();
+  }
+  return global._mongoClientPromise;
 }

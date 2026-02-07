@@ -1,6 +1,6 @@
 import { SKILLS } from "../../../config";
 
-export function fanOnCast(ctx, event){
+export function fanOnCast(ctx: any, event: any) {
   console.log("FAN play")
   const col = ctx.core.getColor(event.attacker);
   const gatherSec = SKILLS.FAN.meta?.orbitSec ?? 4.0;
@@ -90,7 +90,7 @@ export function fanOnCast(ctx, event){
   return true;
 }
 
-export function fanOnHit(ctx, event){
+export function fanOnHit(ctx: any, event: any) {
   const col = ctx.core.getColor(event.attacker);
   const hitPos = ctx.fighters[event.defender].getCorePos(9.4);
   const hp = hitPos.clone().add(new window.THREE.Vector3((event.defender === 0 ? -1 : 1) * 0.6, 0.0, 0));

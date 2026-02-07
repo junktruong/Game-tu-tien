@@ -1,7 +1,12 @@
 import { clamp } from "../../utils";
 import { easeOutCubic, lerp } from "./helpers";
 
-export function updateVfx(vfx, dt, elapsedTime, fighters) {
+export function updateVfx(
+  vfx: any,
+  dt: number,
+  elapsedTime: number,
+  fighters: any[],
+) {
   const THREE = window.THREE;
   const t = elapsedTime;
 
@@ -433,7 +438,7 @@ export function updateVfx(vfx, dt, elapsedTime, fighters) {
     const remain = sh.until - now;
     const fade = remain < 350 ? clamp(remain / 350, 0, 1) : 1;
 
-    obj.traverse((o) => {
+    obj.traverse((o: any) => {
       if (!o.material) return;
       const mats = Array.isArray(o.material) ? o.material : [o.material];
       for (const m of mats) {
@@ -683,7 +688,7 @@ export function updateVfx(vfx, dt, elapsedTime, fighters) {
       const ring = st.rings[i];
       ring.t += dt;
 
-      if (ring.__dirty && ring.swords.every((s) => !s.visible)) {
+      if (ring.__dirty && ring.swords.every((s: any) => !s.visible)) {
         vfx.scene.remove(ring.grp);
         st.rings.splice(i, 1);
         continue;
