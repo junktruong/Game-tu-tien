@@ -1,7 +1,7 @@
 import { clamp, easeInOutSine, easeOutCubic, lerp } from "../utils";
 import type { ArmPosePacket, QuatArray } from "../../../shared/ArmPoseTypes";
 
-const DEFAULT_MODEL_URL = "/models/model07.glb";
+const DEFAULT_MODEL_URL = "/models/model06.glb";
 const MODEL_TARGET_HEIGHT = 14;
 const MODEL_MIN_SCALE = 0.2;
 const MODEL_MAX_SCALE = 8.0;
