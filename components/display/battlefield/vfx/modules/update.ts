@@ -678,7 +678,7 @@ export function updateVfx(
   for (const [ownerIndex, st] of vfx.giantCharges.entries()) {
     st.t += dt;
 
-    if (st.t >= st.nextRingAt && st.rings.length < st.maxRings) {
+    if (!st.firing && st.t >= st.nextRingAt && st.rings.length < st.maxRings) {
       vfx._giantAddRing(ownerIndex);
       st.nextRingAt += st.ringEverySec;
     }

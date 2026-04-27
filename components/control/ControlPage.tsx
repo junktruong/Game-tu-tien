@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { initControl } from './controlClient';
+import { CONTROL_SKILL_OPTIONS } from './skillCatalog';
 
 export default function ControlPage() {
   const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || '';
@@ -63,6 +64,32 @@ export default function ControlPage() {
           </div>
           <div className="hint">Calibrate khi tay ở pose chuẩn để giảm lệch.</div>
         </div>
+        <div id="gestureTemplateControls" className="panel">
+          <div className="panel-title">Gesture Templates</div>
+          <label>
+            Chọn chiêu
+            <select
+              id="gestureSelect"
+              defaultValue={CONTROL_SKILL_OPTIONS[0]?.gesture || ''}
+            >
+              {CONTROL_SKILL_OPTIONS.map((skill) => (
+                <option key={skill.skillId} value={skill.gesture}>
+                  {skill.label} ({skill.gesture})
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="row">
+            <button id="startGestureRecordBtn" className="btn secondary">
+              Start Record
+            </button>
+            <button id="clearGesturesBtn" className="btn secondary">
+              Clear
+            </button>
+          </div>
+          <div id="gestureStoreText" className="hint" />
+          <div id="gestureMatchText" className="hint" />
+        </div>
         <div id="cameraControls" className="panel">
           <div className="panel-title">Camera</div>
           <label>
@@ -109,68 +136,33 @@ export default function ControlPage() {
         <div id="guide-title">BÍ KÍP (CONTROL)</div>
 
         <div className="move">
-          <span className="icon">✋</span>
+          <span className="icon">●</span>
           <div>
-            <span className="name">Liên Hoa:</span>
-            <span className="desc">Xòe tay</span>
+            <span className="name">Record:</span>
+            <span className="desc">Chọn chiêu, bấm Start Record, chờ 3 2 1.</span>
           </div>
         </div>
         <div className="move">
-          <span className="icon">👍</span>
+          <span className="icon">●</span>
           <div>
-            <span className="name">Hộ Thân Cầu:</span>
-            <span className="desc">Giơ ngón cái</span>
-          </div>
-        </div>
-
-        <div className="move">
-          <span className="icon">⚡</span>
-          <div>
-            <span className="name">Song Long Quá Hải:</span>
-            <span className="desc">1 tay ✌️ + 1 tay 🤘 (ATTACK + WALL cùng lúc)</span>
+            <span className="name">Play:</span>
+            <span className="desc">Sai số dưới 0.3 sẽ kích hoạt động tác đã lưu.</span>
           </div>
         </div>
 
         <div className="move">
-          <span className="icon">🙌</span>
+          <span className="icon">●</span>
           <div>
-            <span className="name">Tam Nhẫn Kiếm Chỉ:</span>
-            <span className="desc">2 tay mở giơ cao, giữ 3 giây</span>
+            <span className="name">Capture:</span>
+            <span className="desc">Ghi 0.5 giây gồm bàn tay và arm pose.</span>
           </div>
         </div>
+
         <div className="move">
-          <span className="icon">✌️</span>
+          <span className="icon">●</span>
           <div>
-            <span className="name">Attack:</span>
-            <span className="desc">2 ngón</span>
-          </div>
-        </div>
-        <div className="move">
-          <span className="icon">🤘</span>
-          <div>
-            <span className="name">Wall:</span>
-            <span className="desc">Trỏ + Út</span>
-          </div>
-        </div>
-        <div className="move">
-          <span className="icon">👌</span>
-          <div>
-            <span className="name">Spin:</span>
-            <span className="desc">Chạm cái + trỏ</span>
-          </div>
-        </div>
-        <div className="move">
-          <span className="icon">☝️</span>
-          <div>
-            <span className="name">AIM:</span>
-            <span className="desc">1 ngón trỏ</span>
-          </div>
-        </div>
-        <div className="move">
-          <span className="icon">🖐️</span>
-          <div>
-            <span className="name">Việt Tự Kiếm Tiên:</span>
-            <span className="desc">4 ngón (khép ngón cái)</span>
+            <span className="name">Console:</span>
+            <span className="desc">window.startGestureRecord('ATTACK') cũng bắt đầu record.</span>
           </div>
         </div>
 
@@ -181,7 +173,9 @@ export default function ControlPage() {
 
       <video className="input_video" playsInline muted />
       <video id="cameraPreview" className="camera_preview" playsInline muted />
+      <canvas id="handOverlay" className="hand_overlay" width="640" height="480" />
       <canvas id="poseDebug" className="pose_debug" width="640" height="480" />
+      <div id="recordCountdown" className="record_countdown" />
 
       <style jsx global>{`
         :root {
@@ -220,6 +214,35 @@ export default function ControlPage() {
         }
         .camera_preview.mirror {
           transform: scaleX(-1);
+        }
+        .hand_overlay {
+          position: fixed;
+          left: 16px;
+          bottom: 16px;
+          width: 240px;
+          height: 180px;
+          border-radius: 12px;
+          pointer-events: none;
+          display: none;
+          z-index: 11;
+          transform-origin: center;
+        }
+        .hand_overlay.mirror {
+          transform: scaleX(-1);
+        }
+        .record_countdown {
+          position: fixed;
+          inset: 0;
+          display: none;
+          place-items: center;
+          z-index: 40;
+          pointer-events: none;
+          background: rgba(0, 0, 0, 0.28);
+          color: #ff3333;
+          font-size: 96px;
+          line-height: 1;
+          font-weight: 900;
+          text-shadow: 0 0 28px rgba(255, 0, 0, 0.7);
         }
         .pose_debug {
           position: fixed;

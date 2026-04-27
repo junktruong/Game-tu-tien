@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { initDisplay } from "./battlefield/main";
 import { initControl } from "../control/controlClient";
+import { CONTROL_SKILL_OPTIONS } from "../control/skillCatalog";
 
 const swordSkins = [
   {
@@ -151,7 +152,7 @@ export default function DisplayPage() {
             </div>
 
             <div className="row">
-              <div className="bar" style={{ height: "10px" }}>
+              <div className="bar" style={{ height: "6px" }}>
                 <div id="qi1" className="fill qi1" />
               </div>
               <div id="qi1t" className="small">
@@ -194,7 +195,7 @@ export default function DisplayPage() {
               <div id="qi2t" className="small">
                 100
               </div>
-              <div className="bar" style={{ height: "10px" }}>
+              <div className="bar" style={{ height: "6px" }}>
                 <div id="qi2" className="fill qi2" />
               </div>
             </div>
@@ -224,21 +225,6 @@ export default function DisplayPage() {
 
       <div id="toast" />
       <div id="status">Connecting…</div>
-
-      <div id="sword-picker">
-        <div className="label">SWORD</div>
-        <img src={selectedSkin} alt="sword" className="preview" />
-        <select
-          value={selectedSkin}
-          onChange={(event) => setSelectedSkin(event.target.value)}
-        >
-          {swordSkins.map((skin) => (
-            <option key={skin.id} value={skin.url}>
-              {skin.name}
-            </option>
-          ))}
-        </select>
-      </div>
 
       <div id="control-panel">
         <div className="control-header">
@@ -296,6 +282,53 @@ export default function DisplayPage() {
               </div>
               <div className="hint">
                 Calibrate khi tay ở pose chuẩn để giảm lệch.
+              </div>
+            </div>
+
+            <div id="gestureTemplateControls" className="panel">
+              <div className="panel-title">Gesture Templates</div>
+              <label>
+                Chọn chiêu
+                <select
+                  id="gestureSelect"
+                  defaultValue={CONTROL_SKILL_OPTIONS[0]?.gesture || ""}
+                >
+                  {CONTROL_SKILL_OPTIONS.map((skill) => (
+                    <option key={skill.skillId} value={skill.gesture}>
+                      {skill.label} ({skill.gesture})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="row">
+                <button id="startGestureRecordBtn" className="btn secondary">
+                  Start Record
+                </button>
+                <button id="clearGesturesBtn" className="btn secondary">
+                  Clear
+                </button>
+              </div>
+              <div id="gestureStoreText" className="hint" />
+              <div id="gestureMatchText" className="hint" />
+            </div>
+
+            <div id="swordSetting" className="panel sword-setting">
+              <div className="panel-title">Kiếm</div>
+              <div className="sword-row">
+                <img src={selectedSkin} alt="sword" className="sword-preview" />
+                <label className="sword-select">
+                  Chọn kiếm
+                  <select
+                    value={selectedSkin}
+                    onChange={(event) => setSelectedSkin(event.target.value)}
+                  >
+                    {swordSkins.map((skin) => (
+                      <option key={skin.id} value={skin.url}>
+                        {skin.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
 
@@ -369,7 +402,9 @@ export default function DisplayPage() {
 
       <video className="input_video" playsInline muted />
       <video id="cameraPreview" className="camera_preview" playsInline muted />
+      <canvas id="handOverlay" className="hand_overlay" width="640" height="480" />
       <canvas id="poseDebug" className="pose_debug" width="640" height="480" />
+      <div id="recordCountdown" className="record_countdown" />
     </>
   );
 }

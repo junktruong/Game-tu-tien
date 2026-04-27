@@ -27,29 +27,30 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
+  padding: 10px 12px;
 }
 
 .top {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
   align-items: start;
 }
 
 .hud {
+  width: min(300px, 34vw);
   background: var(--panel);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 8px 10px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 0 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.28);
 }
 
 .name {
   font-weight: 900;
   letter-spacing: 1px;
-  font-size: 14px;
+  font-size: 12px;
   opacity: 0.95;
 }
 
@@ -57,13 +58,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-top: 8px;
+  gap: 6px;
+  margin-top: 5px;
 }
 
 .bar {
   position: relative;
-  height: 12px;
+  height: 8px;
   border-radius: 999px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.08);
@@ -96,37 +97,37 @@ body {
 }
 
 .ult {
-  margin-top: 8px;
+  margin-top: 5px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  font-size: 12px;
+  gap: 6px;
+  font-size: 10px;
   opacity: 0.85;
 }
 
 .ultBadge {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 2px 6px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
   letter-spacing: 1px;
 }
 
 .small {
-  font-size: 12px;
+  font-size: 10px;
   opacity: 0.78;
 }
 
 .tag {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.75;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .combo {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 5px;
+  font-size: 10px;
   letter-spacing: 1px;
   opacity: 0.85;
 }
@@ -167,46 +168,6 @@ body {
   opacity: 0.85;
   pointer-events: none;
   backdrop-filter: blur(10px);
-}
-
-#sword-picker {
-  position: absolute;
-  left: 16px;
-  bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.58);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 14px;
-  pointer-events: auto;
-  backdrop-filter: blur(10px);
-  color: #fff;
-  z-index: 12;
-}
-
-#sword-picker .label {
-  font-size: 11px;
-  letter-spacing: 2px;
-  opacity: 0.7;
-}
-
-#sword-picker .preview {
-  width: 26px;
-  height: 68px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
-}
-
-#sword-picker select {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 12px;
-  outline: none;
 }
 
 #control-panel {
@@ -322,6 +283,24 @@ body {
   margin-top: 6px;
 }
 
+#control-panel .sword-row {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+#control-panel .sword-preview {
+  width: 28px;
+  height: 68px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+}
+
+#control-panel .sword-select {
+  margin-top: 0;
+}
+
 #skill-name {
   font-size: 12px;
   font-weight: 800;
@@ -356,7 +335,7 @@ body {
 .camera_preview {
   position: fixed;
   left: 16px;
-  bottom: 16px;
+  bottom: 96px;
   width: 240px;
   height: 180px;
   border-radius: 12px;
@@ -370,6 +349,38 @@ body {
 
 .camera_preview.mirror {
   transform: scaleX(-1);
+}
+
+.hand_overlay {
+  position: fixed;
+  left: 16px;
+  bottom: 96px;
+  width: 240px;
+  height: 180px;
+  border-radius: 12px;
+  pointer-events: none;
+  display: none;
+  z-index: 11;
+  transform-origin: center;
+}
+
+.hand_overlay.mirror {
+  transform: scaleX(-1);
+}
+
+.record_countdown {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  z-index: 40;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.28);
+  color: #ff3333;
+  font-size: 96px;
+  line-height: 1;
+  font-weight: 900;
+  text-shadow: 0 0 28px rgba(255, 0, 0, 0.7);
 }
 
 .pose_debug {

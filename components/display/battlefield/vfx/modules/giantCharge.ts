@@ -27,6 +27,7 @@ export function startGiantCharge(
     spin: opts.spin ?? 2.6,
     countPerRing: opts.countPerRing ?? 12,
     tiltX: opts.tiltX ?? 0.12,
+    firing: false,
 
     rings: [],
   };
@@ -63,6 +64,7 @@ export function giantAddRing(vfx: any, ownerIndex: number) {
   const THREE = window.THREE;
   const st = vfx.giantCharges.get(ownerIndex);
   if (!st) return;
+  if (st.firing) return;
   if (st.rings.length >= st.maxRings) return;
 
   const ringIndex = st.rings.length;
@@ -131,6 +133,8 @@ export function fireGiantFromStackedRings(
 ) {
   const st = vfx.giantCharges.get(ownerIndex);
   if (!st) return 0;
+  st.firing = true;
+  st.nextRingAt = Number.POSITIVE_INFINITY;
 
   const THREE = window.THREE;
 

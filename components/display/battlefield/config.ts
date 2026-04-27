@@ -119,8 +119,9 @@ export const SKILLS = Object.freeze({
     cd: 3.0,
     anim: { charge: 0.22, swing: 0.28, step: 0.85, lean: 0.14, slashFrom: 0.95, slashTo: -1.25 },
     meta: {
-      shots: 12,
-      cadenceSec: 0.12,
+      shots: 30,
+      cadenceSec: 0.10,
+      hitDelaySec: 0.32,
       projectileSpeed: 90,
       dmgEach: 3
     }

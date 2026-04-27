@@ -148,7 +148,13 @@ export class GameCore {
     return true;
   }
 
-  applyDamage(attacker: number, defender: number, rawDmg: number, heavy: boolean) {
+  applyDamage(
+    attacker: number,
+    defender: number,
+    rawDmg: number,
+    heavy: boolean,
+    hitstopScale = 1,
+  ) {
     const now = this.state.timeMs;
     let dmg = rawDmg;
 
@@ -162,7 +168,10 @@ export class GameCore {
       this.addUlt(defender, 10);
       this.emit({ type: "SHAKE", amount: 0.65 });
       this.emit({ type: "SKILL_HIT", skillId: "PARRY", attacker: defender, defender: attacker, heavy: false, info: { reflect } });
-      this.state.hitstop = Math.max(this.state.hitstop, GAME.hitstopLight);
+      this.state.hitstop = Math.max(
+        this.state.hitstop,
+        GAME.hitstopLight * hitstopScale,
+      );
 
       this.state.players[defender].hp = clamp(this.state.players[defender].hp - dmg, 0, GAME.hpMax);
       return;
@@ -178,7 +187,7 @@ export class GameCore {
 
     this.state.hitstop = Math.max(
       this.state.hitstop,
-      heavy ? GAME.hitstopHeavy : GAME.hitstopLight,
+      (heavy ? GAME.hitstopHeavy : GAME.hitstopLight) * hitstopScale,
     );
 
     if (this.state.players[defender].hp <= 0) {
@@ -283,7 +292,8 @@ export class GameCore {
         const shots = def.meta.shots ?? 12;
         const cadenceSec = def.meta.cadenceSec ?? 0.12;
         const dmgEach = def.meta.dmgEach ?? 3;
-        const hitDelay = Math.max(0.08, cadenceSec * 0.6);
+        const hitDelay = def.meta.hitDelaySec ?? Math.max(0.24, cadenceSec * 3.2);
+        const ringStride = Math.max(1, Math.round(shots / 3));
 
         this.scheduler.schedule(def.anim?.charge ?? 0, () => {
           if (!this.isAlive(attacker) || !this.isAlive(defender)) return;
@@ -292,9 +302,9 @@ export class GameCore {
           for (let i = 0; i < shots; i += 1) {
             this.scheduler.schedule(i * cadenceSec + hitDelay, () => {
               if (!this.isAlive(attacker) || !this.isAlive(defender)) return;
-              const heavy = Math.random() < 0.12;
+              const heavy = i === shots - 1 || (i + 1) % ringStride === 0;
               this.emit({ type: "SKILL_HIT", skillId: def.id, attacker, defender, heavy, index: i, count: shots });
-              this.applyDamage(attacker, defender, dmgEach, heavy);
+              this.applyDamage(attacker, defender, dmgEach, heavy, heavy ? 0.55 : 0.32);
             });
           }
         });

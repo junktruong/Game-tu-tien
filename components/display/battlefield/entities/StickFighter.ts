@@ -646,12 +646,31 @@ export class StickFighter {
     return this.getClipForRecovery();
   }
 
+  getHitTimingForSkill(skillId?: string, heavy = false) {
+    if (skillId === "GIANT") {
+      return {
+        hitBack: heavy ? 0.075 : 0.045,
+        hitRecover: heavy ? 0.14 : 0.09,
+        hitDist: heavy ? 1.8 : 0.95,
+      };
+    }
+
+    return {
+      hitBack: 0.2,
+      hitRecover: 0.4,
+      hitDist: heavy ? 4.0 : 2.5,
+    };
+  }
+
   playClip(name: string | null, durationSec?: number) {
     if (!name || !this.mixer) return false;
     const action = this.clipActions[name];
     if (!action) return false;
     const THREE = window.THREE;
-    const fadeSec = 0.08;
+    const fadeSec =
+      durationSec && durationSec > 0.01
+        ? Math.min(0.08, Math.max(0.02, durationSec * 0.24))
+        : 0.08;
 
     if (this.activeAction && this.activeAction !== action) {
       this.activeAction.fadeOut(fadeSec);
@@ -1210,10 +1229,13 @@ export class StickFighter {
   }
 
   playHit(heavy = false, skillId?: string) {
+    const hitTiming = this.getHitTimingForSkill(skillId, heavy);
     this.anim.mode = "hit";
     this.anim.t = 0;
+    this.anim.hitBack = hitTiming.hitBack;
+    this.anim.hitRecover = hitTiming.hitRecover;
     this.anim.hitDir = this.baseX < 0 ? -1 : 1;
-    this.anim.hitDist = heavy ? 4.0 : 2.5;
+    this.anim.hitDist = hitTiming.hitDist;
 
     this.currentAction = "HURT";
     this.hitLockUntil = performance.now() + (this.anim.hitBack + this.anim.hitRecover) * 1000;
